@@ -1,0 +1,6 @@
+.vscode
+__pycache__/
+.pyc
+*.egg-info/
+.pytest_cache
+./old_r_script/*
