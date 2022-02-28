@@ -1,7 +1,8 @@
 # Segmenter <!-- omit in toc -->
 
 - [1. Introduction](#1-introduction)
-  - [1.1. HS Sister-Package](#11-hs-sister-package)
+  - [1.1. Related Project `pyroads`](#11-related-project-pyroads)
+  - [1.2. Related Project `HS`](#12-related-project-hs)
 - [2. Installation](#2-installation)
 - [3. Usage](#3-usage)
   - [3.1. `segment_by_categories_and_slk_discontinuities()`](#31-segment_by_categories_and_slk_discontinuities)
@@ -34,13 +35,13 @@ This package provides several tools to
    the requested segment size (by both splitting/repeating rows and/or merging
    rows).
 
-### `pyroads` Sister-Package
+### 1.1. Related Project `pyroads` 
 
 See also segmentation functions available in `pyroads` project
 <https://github.com/shaan-nmb/pyroads>. They are similar, but have subtly
 different outputs and are useful for different projects.
 
-### 1.1. `HS` Sister-Package
+### 1.2. Related Project `HS`
 
 This package is a spin-off of the
 [HS (Homogeneous Segmentation) python package](https://github.com/thehappycheese/HS).
