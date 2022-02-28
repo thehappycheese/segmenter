@@ -1,13 +1,19 @@
 # Segmenter <!-- omit in toc -->
 
 - [1. Introduction](#1-introduction)
-	- [1.1. HS Sub-Package](#11-hs-sub-package)
+  - [1.1. HS Sister-Package](#11-hs-sister-package)
 - [2. Installation](#2-installation)
 - [3. Usage](#3-usage)
-	- [3.1. Segmenter Functions](#31-segmenter-functions)
-		- [3.1.1. `segment_by_categories_and_slk_true_discontinuities()`](#311-segment_by_categories_and_slk_true_discontinuities)
-		- [3.1.2. `split_rows_by_category_to_max_segment_length()`](#312-split_rows_by_category_to_max_segment_length)
-	- [3.2. Homogenous Segmentation](#32-homogenous-segmentation)
+  - [3.1. `segment_by_categories_and_slk_discontinuities()`](#31-segment_by_categories_and_slk_discontinuities)
+    - [3.1.1. Example](#311-example)
+  - [3.2. `segment_by_categories_and_slk_true_discontinuities()`](#32-segment_by_categories_and_slk_true_discontinuities)
+    - [3.2.1. Args](#321-args)
+    - [3.2.2. Returns](#322-returns)
+    - [3.2.3. Example](#323-example)
+  - [3.3. `split_rows_by_category_to_max_segment_length()`](#33-split_rows_by_category_to_max_segment_length)
+    - [3.3.1. Args](#331-args)
+    - [3.3.2. Returns](#332-returns)
+    - [3.3.3. Example](#333-example)
 
 ## 1. Introduction
 
@@ -16,36 +22,38 @@ roughness measurement every 10 metres), and must be grouped into larger
 intervals. Sometimes observations have has uneven intervals (eg local government
 area) and must be split into smaller regular intervals.
 
-Several tools to reshape data where each observation applies to a linear portion
-(of variable length) of a road network, perhaps distinguishing carriageways and
-lanes. Segmentation may mean splitting observations (repeating rows) or
-sometimes merging observations to achieve observations that refer to regular
-lengths of the road network.
+This package provides several tools to
 
-### 1.1. HS Sub-Package
+1. Identify contiguous sections of data based on
+   - categories (eg `road_number`, `carriageway`, `lane`) and a linear measure
+     (`slk`)
+   - categories (eg `road_number`, `carriageway`, `lane`) and linear measures
+     (`slk` and `true`)
+2. Rearrange data such that each observation applies to a regularly sized linear
+   portion of a road network, with `slk_from`/`slk_to` at nice even multiples of
+   the requested segment size (by both splitting/repeating rows and/or merging
+   rows).
 
-This package currently contains part of an R packaged called HS which has been
-copied from the original python port here <https://github.com/thehappycheese/HS>
-which was in turn ported from an
+### `pyroads` Sister-Package
+
+See also segmentation functions available in `pyroads` project
+<https://github.com/shaan-nmb/pyroads>. They are similar, but have subtly
+different outputs and are useful for different projects.
+
+### 1.1. `HS` Sister-Package
+
+This package is a spin-off of the
+[HS (Homogeneous Segmentation) python package](https://github.com/thehappycheese/HS).
+This is a python version of the original
 [R package - also called HS](https://cran.r-project.org/web/packages/HS/index.html).
 
-The aim of the HS package is to segmentthe road network segments based
-on the two things listed below such that each segment can be reasonably represented by a single characteristic value.
+The aim of the HS package is to segment the road network segments based on the
+two things listed below such that each segment can be reasonably represented by
+a single characteristic value.
 
 1. Categorical variables (eg `road_number`, `carriageway`, `lane`)
-2. One or more road condition variables (eg `roughness`, `rutting`, `deflection`, `curvature` etc)
-
-
-
-The author of the original R package is **Yongze Song**, and it is related to the following paper:
-
-> Song, Yongze, Peng Wu, Daniel Gilmore, and Qindong Li. "[A spatial heterogeneity-based segmentation model for analyzing road deterioration network data in multi-scale infrastructure systems.](https://ieeexplore.ieee.org/document/9123684)" IEEE Transactions on Intelligent Transportation Systems (2020).
-
-These functions may be removed at a later date in favour of maintaining the
-python port repo <https://github.com/thehappycheese/HS>. I want to make upgrades
-to the interface of the HS project, but I don't want to do much more on the repo
-since it is currently a "faithful" port to python. For now some functionality
-has been moved over to this package so I could add a better interface.
+2. One or more road condition variables (eg `roughness`, `rutting`,
+   `deflection`, `curvature` etc)
 
 ## 2. Installation
 
@@ -56,249 +64,350 @@ branch
 pip install git+https://github.com/thehappycheese/segmenter.git#egg=segmenter
 ```
 
-Or check the [releases](https://github.com/thehappycheese/segmenter/releases) for specific versions.
+Or check the [releases](https://github.com/thehappycheese/segmenter/releases)
+for specific versions.
 
 Uninstall using
 
 ```bash
-pip uninstall HS
+pip uninstall segmenter
 ```
 
 ## 3. Usage
 
-### 3.1. Segmenter Functions
 
-#### 3.1.1. `segment_by_categories_and_slk_true_discontinuities()`
+### 3.1. `segment_by_categories_and_slk_discontinuities()`
 
+Used to create the column `seg.ctg` in the example below: (for more details
+please see the documentation for
+`segment_by_categories_and_slk_true_discontinuities()` below)
+
+#### 3.1.1. Example
 ```python
-from segmenter import segment_by_categories_and_slk_true_discontinuities
-# discontinuity at SLK 
+import pandas as pd
+import numpy as np
+from segmenter import segment_by_categories_and_slk_discontinuities
+
 data_to_segment = pd.DataFrame(
-	columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
-	data=[
-		["H001", "L", "L1", 0.010, 0.050, 0.010, 0.050, "a"], # SLK discontinuity (gap)
-		["H001", "L", "L1", 0.050, 0.070, 0.050, 0.070, "b"],
-		["H001", "L", "L1", 0.080, 0.100, 0.070, 0.090, "c"],
-		["H001", "L", "L1", 0.100, 0.120, 0.090, 0.110, "d"],
+    columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
+    data=[
+        ["H001", "L", "L1", 0.010, 0.050, 0.010, 0.050, "a"], # SLK discontinuity (gap)
+        ["H001", "L", "L1", 0.050, 0.070, 0.050, 0.070, "b"],
+        ["H001", "L", "L1", 0.080, 0.100, 0.070, 0.090, "c"],
+        ["H001", "L", "L1", 0.100, 0.120, 0.090, 0.110, "d"],
 
-		["H001", "L", "L2", 0.010, 0.050, 0.010, 0.050, "a"], # TRUE discontinuity (gap, overlaps not permitted for true)
-		["H001", "L", "L2", 0.050, 0.070, 0.050, 0.070, "b"],
-		["H001", "L", "L2", 0.070, 0.080, 0.070, 0.080, "c"],
-		["H001", "L", "L2", 0.080, 0.090, 0.090, 0.110, "d"],
-		["H001", "L", "L2", 0.090, 0.100, 0.110, 0.120, "e"],
+        ["H001", "L", "L2", 0.010, 0.050, 0.010, 0.050, "a"], # TRUE discontinuity (gap, overlaps not permitted for true)
+        ["H001", "L", "L2", 0.050, 0.070, 0.050, 0.070, "b"],
+        ["H001", "L", "L2", 0.070, 0.080, 0.070, 0.080, "c"],
+        ["H001", "L", "L2", 0.080, 0.090, 0.090, 0.110, "d"],
+        ["H001", "L", "L2", 0.090, 0.100, 0.110, 0.120, "e"],
 
-		["H001", "L", "L3", 0.080, 0.100, 0.070, 0.090, "e"], # XSP discontinuity
-		["H001", "L", "L3", 0.100, 0.120, 0.090, 0.110, "f"],
+        ["H001", "L", "L3", 0.080, 0.100, 0.070, 0.090, "e"], # XSP discontinuity
+        ["H001", "L", "L3", 0.100, 0.120, 0.090, 0.110, "f"],
 
-		["H001", "R", "L3", 0.010, 0.050, 0.010, 0.050, "a"], # SLK discontinuity (overlap)
-		["H001", "R", "L3", 0.050, 0.070, 0.050, 0.070, "b"],
-		["H001", "R", "L3", 0.050, 0.060, 0.070, 0.080, "c"],
-		["H001", "R", "L3", 0.060, 0.070, 0.080, 0.100, "d"],
-		["H001", "R", "L3", 0.070, 0.090, 0.100, 0.110, "e"],
-	]
+        ["H001", "R", "L3", 0.010, 0.050, 0.010, 0.050, "a"], # SLK discontinuity (overlap)
+        ["H001", "R", "L3", 0.050, 0.070, 0.050, 0.070, "b"],
+        ["H001", "R", "L3", 0.050, 0.060, 0.070, 0.080, "c"],
+        ["H001", "R", "L3", 0.060, 0.070, 0.080, 0.100, "d"],
+        ["H001", "R", "L3", 0.070, 0.090, 0.100, 0.110, "e"],
+    ]
 )
 
 actual_result = data_to_segment.copy()
-actual_result["seg.ctg"] = segment_by_categories_and_slk_true_discontinuities(
-	data_to_segment,
-	["road_no", "carriageway", "xsp"],
-	measure_slk =("slk_from", "slk_to"),
-	measure_true=("true_from","true_to")
+actual_result["seg.ctg"] = segment_by_categories_and_slk_discontinuities(
+    data_to_segment,
+    ["road_no", "carriageway", "xsp"],
+    measure_slk =("slk_from", "slk_to"),
 )
 
 expected_result = pd.DataFrame(
-	columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value" , "seg.ctg"],
-	data=[
-		["H001", "L", "L1", 0.010, 0.050, 0.010, 0.050, "a", 0], # SLK discontinuity (gap)
-		["H001", "L", "L1", 0.050, 0.070, 0.050, 0.070, "b", 0],
-		["H001", "L", "L1", 0.080, 0.100, 0.070, 0.090, "c", 1],
-		["H001", "L", "L1", 0.100, 0.120, 0.090, 0.110, "d", 1],
+    columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value" , "seg.ctg"],
+    data=[
+        ["H001", "L", "L1", 0.010, 0.050, 0.010, 0.050, "a", 0], # SLK discontinuity (gap)
+        ["H001", "L", "L1", 0.050, 0.070, 0.050, 0.070, "b", 0],
+        ["H001", "L", "L1", 0.080, 0.100, 0.070, 0.090, "c", 1],
+        ["H001", "L", "L1", 0.100, 0.120, 0.090, 0.110, "d", 1],
 
-		["H001", "L", "L2", 0.010, 0.050, 0.010, 0.050, "a", 2], # TRUE discontinuity (gap, overlaps not permitted for true)
-		["H001", "L", "L2", 0.050, 0.070, 0.050, 0.070, "b", 2],
-		["H001", "L", "L2", 0.070, 0.080, 0.070, 0.080, "c", 2],
-		["H001", "L", "L2", 0.080, 0.090, 0.090, 0.110, "d", 3],
-		["H001", "L", "L2", 0.090, 0.100, 0.110, 0.120, "e", 3],
+        ["H001", "L", "L2", 0.010, 0.050, 0.010, 0.050, "a", 2], # TRUE discontinuity (gap, overlaps not permitted for true)
+        ["H001", "L", "L2", 0.050, 0.070, 0.050, 0.070, "b", 2],
+        ["H001", "L", "L2", 0.070, 0.080, 0.070, 0.080, "c", 2],
+        ["H001", "L", "L2", 0.080, 0.090, 0.090, 0.110, "d", 2],
+        ["H001", "L", "L2", 0.090, 0.100, 0.110, 0.120, "e", 2],
 
-		["H001", "L", "L3", 0.080, 0.100, 0.070, 0.090, "e", 4], # XSP discontinuity
-		["H001", "L", "L3", 0.100, 0.120, 0.090, 0.110, "f", 4],
+        ["H001", "L", "L3", 0.080, 0.100, 0.070, 0.090, "e", 3], # XSP discontinuity
+        ["H001", "L", "L3", 0.100, 0.120, 0.090, 0.110, "f", 3],
 
-		["H001", "R", "L3", 0.010, 0.050, 0.010, 0.050, "a", 5], # SLK discontinuity (overlap)
-		["H001", "R", "L3", 0.050, 0.070, 0.050, 0.070, "b", 5],
-		["H001", "R", "L3", 0.050, 0.060, 0.070, 0.080, "c", 6],
-		["H001", "R", "L3", 0.060, 0.070, 0.080, 0.100, "d", 6],
-		["H001", "R", "L3", 0.070, 0.090, 0.100, 0.110, "e", 6],
-	]
+        ["H001", "R", "L3", 0.010, 0.050, 0.010, 0.050, "a", 4], # SLK discontinuity (overlap)
+        ["H001", "R", "L3", 0.050, 0.070, 0.050, 0.070, "b", 4],
+        ["H001", "R", "L3", 0.050, 0.060, 0.070, 0.080, "c", 5],
+        ["H001", "R", "L3", 0.060, 0.070, 0.080, 0.100, "d", 5],
+        ["H001", "R", "L3", 0.070, 0.090, 0.100, 0.110, "e", 5],
+    ]
 )
 
 assert actual_result.compare(expected_result).empty
 ```
 
-#### 3.1.2. `split_rows_by_category_to_max_segment_length()`
+### 3.2. `segment_by_categories_and_slk_true_discontinuities()`
+
+Returns a series containing integer segment labels:
+
+A new 'segment' is started whenever one of the `categories` changes or
+any time there is a discontinuity in the slk and/or true measure.
+
+Please Note:
+
+- For each unique combination of `categories` in the input `data`, the range `true_from` to `true_to` for observations **must** be non-overlapping.
+- No check is made for overlapping observations in this function, it is actually very computationally intensive to do so. I might write a utility that does it one day.
+- Weird stuff will happen if there are overlaps
+- You have been warned
+
+Internally, data is sorted by the `categories` (in order provided) then by
+`measure_true[0]` prior to seeking discontinuities then labeling.
+
+#### 3.2.1. Args
+
+- `data` (`pandas.DataFrame`):
+  - data to be segmented
+- `categories` (`list[str]`):
+  - column names of categories to segment by; eg `["road", "cwy"]` or `["road", "cwy", "xsp"]`
+- `measure_slk` (`tuple[str,str]`):
+  - column names of slk measure to segment by; eg `("slk_from", "slk_to")`
+- `measure_true` (`tuple[str,str]`):
+  - column names of true measure to segment by; eg `("true_from", "true_to")`
+
+#### 3.2.2. Returns
+
+`pandas.Series`: A series of integers which label the segment_id of each row. A
+series with an index that is compatible with the input `data` such that it can
+be easily joined or assigned to the original dataframe.
+
+#### 3.2.3. Example
+
+Used to create the column `seg.ctg` in the example below:
 
 ```python
-from segmenter import split_rows_by_category_to_max_segment_length
-    
-    data_to_segment = pd.DataFrame(
-        columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
-        data=[
-            ["H001", "L", "L1", 0.041, 0.050, 0.041, 0.050, "a"], # late start (no join)
-            ["H001", "L", "L1", 0.050, 0.061, 0.050, 0.061, "b"], # SLK discontinuity (gap)
-            ["H001", "L", "L1", 0.080, 0.090, 0.061, 0.071, "c"],
-            ["H001", "L", "L1", 0.090, 0.096, 0.071, 0.077, "d"], # early finish (join)
-            
-            ["H001", "L", "L2", 0.040, 0.050, 0.040, 0.050, "e"],
-            ["H001", "L", "L2", 0.050, 0.060, 0.050, 0.060, "f"], # TRUE discontinuity (gap) (Note: overlaps not permitted for true)
-            ["H001", "L", "L2", 0.060, 0.070, 0.070, 0.080, "g"],
-            ["H001", "L", "L2", 0.070, 0.080, 0.080, 0.090, "h"],
+from segmenter import segment_by_categories_and_slk_true_discontinuities
 
-            ["H001", "L", "L3", 0.080, 0.090, 0.080, 0.090, "i"], # XSP discontinuity
-            ["H001", "L", "L3", 0.090, 0.100, 0.090, 0.100, "j"],
+data_to_segment = pd.DataFrame(
+    columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
+    data=[
+        ["H001", "L", "L1", 0.010, 0.050, 0.010, 0.050, "a"], # SLK discontinuity (gap)
+        ["H001", "L", "L1", 0.050, 0.070, 0.050, 0.070, "b"],
+        ["H001", "L", "L1", 0.080, 0.100, 0.070, 0.090, "c"],
+        ["H001", "L", "L1", 0.100, 0.120, 0.090, 0.110, "d"],
 
-            ["H001", "R", "L3", 0.010, 0.020, 0.010, 0.020, "k"], # SLK discontinuity (overlap)
-            ["H001", "R", "L3", 0.020, 0.030, 0.020, 0.030, "l"],
-            ["H001", "R", "L3", 0.039, 0.045, 0.030, 0.036, "m"], # late finish (join)
-            ["H001", "R", "L3", 0.045, 0.055, 0.036, 0.046, "n"],
+        ["H001", "L", "L2", 0.010, 0.050, 0.010, 0.050, "a"], # TRUE discontinuity (gap, overlaps not permitted for true)
+        ["H001", "L", "L2", 0.050, 0.070, 0.050, 0.070, "b"],
+        ["H001", "L", "L2", 0.070, 0.080, 0.070, 0.080, "c"],
+        ["H001", "L", "L2", 0.080, 0.090, 0.090, 0.110, "d"],
+        ["H001", "L", "L2", 0.090, 0.100, 0.110, 0.120, "e"],
 
-            ["H002", "R", "L4", 0.000, 0.001, 0.000, 0.001, "r"], # Already too small
-            ["H002", "R", "L4", 0.001, 0.003, 0.001, 0.003, "s"],
-            ["H002", "R", "L4", 0.003, 0.006, 0.003, 0.006, "t"],
+        ["H001", "L", "L3", 0.080, 0.100, 0.070, 0.090, "e"], # XSP discontinuity
+        ["H001", "L", "L3", 0.100, 0.120, 0.090, 0.110, "f"],
 
-            ["H002", "L", "L1", 0.000, 0.001, 0.000, 0.001, "o"], # Already too small
-            ["H002", "L", "L1", 0.001, 0.003, 0.001, 0.003, "p"],
-            ["H002", "L", "L1", 0.003, 0.006, 0.003, 0.006, "q"],
+        ["H001", "R", "L3", 0.010, 0.050, 0.010, 0.050, "a"], # SLK discontinuity (overlap)
+        ["H001", "R", "L3", 0.050, 0.070, 0.050, 0.070, "b"],
+        ["H001", "R", "L3", 0.050, 0.060, 0.070, 0.080, "c"],
+        ["H001", "R", "L3", 0.060, 0.070, 0.080, 0.100, "d"],
+        ["H001", "R", "L3", 0.070, 0.090, 0.100, 0.110, "e"],
+    ]
+)
 
-        ]
-    )
+actual_result = data_to_segment.copy()
+actual_result["seg.ctg"] = segment_by_categories_and_slk_true_discontinuities(
+    data_to_segment,
+    ["road_no", "carriageway", "xsp"],
+    measure_slk =("slk_from", "slk_to"),
+    measure_true=("true_from","true_to")
+)
 
-    result = split_rows_by_category_to_max_segment_length(
-        data=data_to_segment,
-        categories=["road_no", "carriageway", "xsp"],
-        measure_slk =("slk_from", "slk_to"),
-        measure_true=("true_from","true_to"),
-        max_segment_length=0.005,
-        min_segment_length=0.002,
-    )
+expected_result = pd.DataFrame(
+    columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value" , "seg.ctg"],
+    data=[
+        ["H001", "L", "L1", 0.010, 0.050, 0.010, 0.050, "a", 0], # SLK discontinuity (gap)
+        ["H001", "L", "L1", 0.050, 0.070, 0.050, 0.070, "b", 0],
+        ["H001", "L", "L1", 0.080, 0.100, 0.070, 0.090, "c", 1],
+        ["H001", "L", "L1", 0.100, 0.120, 0.090, 0.110, "d", 1],
 
-    expected_result = pd.DataFrame(
-        columns=[
-            "road_no",
-            "carriageway",
-            "xsp",
-            "segment_index",
-            "slk_from",
-            "slk_to",
-            "true_from",
-            "true_to",
-            "value"
-        ],
-        data=[
-            ["H001", "L", "L1", 0, 0.041, 0.045, 0.041, 0.045, "a"],
-            ["H001", "L", "L1", 0, 0.045, 0.050, 0.045, 0.050, "a"],
-            ["H001", "L", "L1", 0, 0.050, 0.055, 0.050, 0.055, "b"],
-            ["H001", "L", "L1", 0, 0.055, 0.061, 0.055, 0.061, "b"],
-            ["H001", "L", "L1", 1, 0.080, 0.085, 0.061, 0.066, "c"], # SLK discontinuity (gap)
-            ["H001", "L", "L1", 1, 0.085, 0.090, 0.066, 0.071, "c"],
-            ["H001", "L", "L1", 1, 0.090, 0.096, 0.071, 0.077, "d"], # early finish (join)
-            
-            ["H001", "L", "L2", 2, 0.040, 0.045, 0.040, 0.045, "e"],
-            ["H001", "L", "L2", 2, 0.045, 0.050, 0.045, 0.050, "e"],
-            ["H001", "L", "L2", 2, 0.050, 0.055, 0.050, 0.055, "f"],
-            ["H001", "L", "L2", 2, 0.055, 0.060, 0.055, 0.060, "f"], # TRUE discontinuity (gap) (Note: overlaps not permitted for true)
-            ["H001", "L", "L2", 3, 0.060, 0.065, 0.070, 0.075, "g"],
-            ["H001", "L", "L2", 3, 0.065, 0.070, 0.075, 0.080, "g"],
-            ["H001", "L", "L2", 3, 0.070, 0.075, 0.080, 0.085, "h"],
-            ["H001", "L", "L2", 3, 0.075, 0.080, 0.085, 0.090, "h"],
+        ["H001", "L", "L2", 0.010, 0.050, 0.010, 0.050, "a", 2], # TRUE discontinuity (gap, overlaps not permitted for true)
+        ["H001", "L", "L2", 0.050, 0.070, 0.050, 0.070, "b", 2],
+        ["H001", "L", "L2", 0.070, 0.080, 0.070, 0.080, "c", 2],
+        ["H001", "L", "L2", 0.080, 0.090, 0.090, 0.110, "d", 3],
+        ["H001", "L", "L2", 0.090, 0.100, 0.110, 0.120, "e", 3],
 
-            ["H001", "L", "L3", 4, 0.080, 0.085, 0.080, 0.085, "i"], # XSP discontinuity
-            ["H001", "L", "L3", 4, 0.085, 0.090, 0.085, 0.090, "i"],
-            ["H001", "L", "L3", 4, 0.090, 0.095, 0.090, 0.095, "j"],
-            ["H001", "L", "L3", 4, 0.095, 0.100, 0.095, 0.100, "j"],
+        ["H001", "L", "L3", 0.080, 0.100, 0.070, 0.090, "e", 4], # XSP discontinuity
+        ["H001", "L", "L3", 0.100, 0.120, 0.090, 0.110, "f", 4],
 
-            ["H001", "R", "L3", 5, 0.010, 0.015, 0.010, 0.015, "k"],
-            ["H001", "R", "L3", 5, 0.015, 0.020, 0.015, 0.020, "k"],
-            ["H001", "R", "L3", 5, 0.020, 0.025, 0.020, 0.025, "l"],
-            ["H001", "R", "L3", 5, 0.025, 0.030, 0.025, 0.030, "l"], # SLK discontinuity (overlap)
-            ["H001", "R", "L3", 6, 0.039, 0.045, 0.030, 0.036, "m"],
-            ["H001", "R", "L3", 6, 0.045, 0.050, 0.036, 0.041, "n"],
-            ["H001", "R", "L3", 6, 0.050, 0.055, 0.041, 0.046, "n"],
+        ["H001", "R", "L3", 0.010, 0.050, 0.010, 0.050, "a", 5], # SLK discontinuity (overlap)
+        ["H001", "R", "L3", 0.050, 0.070, 0.050, 0.070, "b", 5],
+        ["H001", "R", "L3", 0.050, 0.060, 0.070, 0.080, "c", 6],
+        ["H001", "R", "L3", 0.060, 0.070, 0.080, 0.100, "d", 6],
+        ["H001", "R", "L3", 0.070, 0.090, 0.100, 0.110, "e", 6],
+    ]
+)
 
-            ["H002", "L", "L1", 7, 0.000, 0.006, 0.000, 0.006, "q"], # Already too small
-
-            ["H002", "R", "L4", 8, 0.000, 0.006, 0.000, 0.006, "t"], # Already too small
-        ]
-    ).set_index(
-        ["road_no", "carriageway", "xsp", "segment_index"]
-    )
-
-    pd.testing.assert_frame_equal(
-        result,
-        expected_result,
-        check_like =False, # ignore column order and label order
-    )
+assert actual_result.compare(expected_result).empty
 ```
 
-### 3.2. Homogenous Segmentation
+### 3.3. `split_rows_by_category_to_max_segment_length()`
+
+Split rows by category, then into segments of even length. The `slk_from` /
+`slk_to` of each segment will be at integer multiples of `max_segment_length`.
+
+Other columns in the dataframe are recombined with the output by taking the
+values from the single input row which has the largest overlap with the output
+row. The result of this recombination may not be ideal; for example
+
+- there is no check regarding missing values; the input row transferred to the
+  output may have missing values. You may expect the longest **not-blank**
+  value, but that is not what you get.
+- there is no check regarding repeated values; you may expect the output to
+  reflect the most common **value** when considering the combined length of many
+  input rows, but that is not what you will get.
+
+If the above issues are a concern you may wish to drop the value columns and
+re-merge them using a different tool.
+
+#### 3.3.1. Args
+
+- `data` (`pandas.DataFrame`):
+  - DataFrame to be segmented
+- `measure_slk` (`tuple[str,str]`):
+  - Column names of slk measure to segment by; eg `("slk_from", "slk_to")`
+- `measure_true` (`tuple[str,str]`):
+  - Column names of true measure to segment by; eg `("true_from", "true_to")`
+- `categories` (`list[str]`):
+  - Column names of categories to segment by; eg `["road", "cwy"]`
+- `min_segment_length` (`float`, optional): Segments shorter than this will be dropped merged with adjacent segments. Only happens to the first and last observation in each segment id. Default is Zero.
+- `max_segment_length` (`float`):
+  - This is the target segment length. For each row in the output
+    `max_segment_length == slk_to - slk_from`
+  - For each row in the output `slk_from` / `slk_to` will be at integer
+    multiples of `max_segment_length` if possible.
+  - May not be achieved at
+    - the beginning or end of a continuous run of segments (ie a lane or
+      carriageway section), or
+    - When the segment in the input is already shorter than `max_segment_length`
+
+#### 3.3.2. Returns
+
+`pandas.DataFrame`: Will have the same general column layout except
+
+- `slk_from` / `slk_to` will have been made into regular segment lengths, in integer multiples of `max_segment_length`.
+- `true_from` / `true_to` will be adjusted to suit the new slks
+- data will have been repeated or merged (as described above) to suit the new number of rows
+- `segment_id` column has been added (see documentation for `segment_by_categories_and_slk_true_discontinuities()`)
+- `__original_sort_order` column has been added, should you wish to restore the approximate original sort order of the data, since the dataframe is sorted arbitrarily inside the function.
+
+#### 3.3.3. Example
 
 ```python
-from HS.homogeneous_segmentation import homogenous_segmentation
 import pandas as pd
-from io import StringIO
+import numpy as np
+from segmenter import split_rows_by_category_to_max_segment_length
 
-data = """road,slk_from,slk_to,cwy,deflection,dirn
-H001,0.00,0.01,L,179.37,L
-H001,0.01,0.02,L,177.12,L
-H001,0.02,0.03,L,179.06,L
-H001,0.03,0.04,L,212.65,L
-H001,0.04,0.05,L,175.35,L
-H001,0.05,0.06,L,188.66,L
-H001,0.06,0.07,L,188.31,L
-H001,0.07,0.08,L,174.48,L
-H001,0.08,0.09,L,210.28,L
-H001,0.09,0.10,L,260.05,L
-H001,0.10,0.11,L,228.83,L
-H001,0.11,0.12,L,226.33,L
-H001,0.12,0.13,L,245.53,L
-H001,0.13,0.14,L,315.77,L
-H001,0.14,0.15,L,373.86,L
-H001,0.15,0.16,L,333.56,L"""
+data_to_segment = pd.DataFrame(
+    columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
+    data=[
+        ["H001", "L", "L1", 0.041, 0.050, 0.041, 0.050, "a"], # late start (no join)
+        ["H001", "L", "L1", 0.050, 0.061, 0.050, 0.061, "b"], # SLK discontinuity (gap)
+        ["H001", "L", "L1", 0.080, 0.090, 0.061, 0.071, "c"],
+        ["H001", "L", "L1", 0.090, 0.096, 0.071, 0.077, "d"], # early finish (join)
+        
+        ["H001", "L", "L2", 0.040, 0.050, 0.040, 0.050, "e"],
+        ["H001", "L", "L2", 0.050, 0.060, 0.050, 0.060, "f"], # TRUE discontinuity (gap) (Note: overlaps not permitted for true)
+        ["H001", "L", "L2", 0.060, 0.070, 0.070, 0.080, "g"],
+        ["H001", "L", "L2", 0.070, 0.080, 0.080, 0.090, "h"],
+
+        ["H001", "L", "L3", 0.080, 0.090, 0.080, 0.090, "i"], # XSP discontinuity
+        ["H001", "L", "L3", 0.090, 0.100, 0.090, 0.100, "j"],
+
+        ["H001", "R", "L3", 0.010, 0.020, 0.010, 0.020, "k"], # SLK discontinuity (overlap)
+        ["H001", "R", "L3", 0.020, 0.030, 0.020, 0.030, "l"],
+        ["H001", "R", "L3", 0.039, 0.045, 0.030, 0.036, "m"], # late finish (join)
+        ["H001", "R", "L3", 0.045, 0.055, 0.036, 0.046, "n"],
+
+        ["H002", "R", "L4", 0.000, 0.001, 0.000, 0.001, "r"], # Already too small
+        ["H002", "R", "L4", 0.001, 0.003, 0.001, 0.003, "s"],
+        ["H002", "R", "L4", 0.003, 0.006, 0.003, 0.006, "t"],
+
+        ["H002", "L", "L1", 0.000, 0.001, 0.000, 0.001, "o"], # Already too small
+        ["H002", "L", "L1", 0.001, 0.003, 0.001, 0.003, "p"],
+        ["H002", "L", "L1", 0.003, 0.006, 0.003, 0.006, "q"],
+
+    ]
+)
 
 
-expected_output = """road,slk_from,slk_to,cwy,deflection,dirn,length,seg.id,seg.point
-H001,0.00,0.01,L,179.37,L,0.01,1,1
-H001,0.01,0.02,L,177.12,L,0.01,1,0
-H001,0.02,0.03,L,179.06,L,0.01,1,0
-H001,0.03,0.04,L,212.65,L,0.01,1,0
-H001,0.04,0.05,L,175.35,L,0.01,2,1
-H001,0.05,0.06,L,188.66,L,0.01,2,0
-H001,0.06,0.07,L,188.31,L,0.01,2,0
-H001,0.07,0.08,L,174.48,L,0.01,2,0
-H001,0.08,0.09,L,210.28,L,0.01,2,0
-H001,0.09,0.10,L,260.05,L,0.01,3,1
-H001,0.10,0.11,L,228.83,L,0.01,3,0
-H001,0.11,0.12,L,226.33,L,0.01,3,0
-H001,0.12,0.13,L,245.53,L,0.01,3,0
-H001,0.13,0.14,L,315.77,L,0.01,3,0
-H001,0.14,0.15,L,373.86,L,0.01,3,0
-H001,0.15,0.16,L,333.56,L,0.01,3,0
-"""
+result = split_rows_by_category_to_max_segment_length(
+    data=data_to_segment,
+    categories=["road_no", "carriageway", "xsp"],
+    measure_slk =("slk_from", "slk_to"),
+    measure_true=("true_from","true_to"),
+    max_segment_length=0.005,
+    min_segment_length=0.002,
+)
 
-def test_readme_example():
-	df = pd.read_csv(StringIO(data))
 
-	df = homogenous_segmentation(
-		data                        =df,
-		method                      ="shs",
-		measure_start               ="slk_from",
-		measure_end                 ="slk_to",
-		variables                   =["deflection"],
-		allowed_segment_length_range=(0.030, 0.080)
-	)
+expected_result = pd.DataFrame(
+    columns=[
+        "road_no",
+        "carriageway",
+        "xsp",
+        "segment_index",
+        "slk_from",
+        "slk_to",
+        "true_from",
+        "true_to",
+        "__original_order",
+        "value"
+    ],
+    data=[
+        ["H001", "L", "L1", 0, 0.041, 0.045, 0.041, 0.045, 0, "a"],
+        ["H001", "L", "L1", 0, 0.045, 0.050, 0.045, 0.050, 0, "a"],
+        ["H001", "L", "L1", 0, 0.050, 0.055, 0.050, 0.055, 1, "b"],
+        ["H001", "L", "L1", 0, 0.055, 0.061, 0.055, 0.061, 1, "b"],
+        ["H001", "L", "L1", 1, 0.080, 0.085, 0.061, 0.066, 2, "c"], # SLK discontinuity (gap)
+        ["H001", "L", "L1", 1, 0.085, 0.090, 0.066, 0.071, 2, "c"],
+        ["H001", "L", "L1", 1, 0.090, 0.096, 0.071, 0.077, 3, "d"], # early finish (join)
+        
+        ["H001", "L", "L2", 2, 0.040, 0.045, 0.040, 0.045, 4, "e"],
+        ["H001", "L", "L2", 2, 0.045, 0.050, 0.045, 0.050, 4, "e"],
+        ["H001", "L", "L2", 2, 0.050, 0.055, 0.050, 0.055, 5, "f"],
+        ["H001", "L", "L2", 2, 0.055, 0.060, 0.055, 0.060, 5, "f"], # TRUE discontinuity (gap) (Note: overlaps not permitted for true)
+        ["H001", "L", "L2", 3, 0.060, 0.065, 0.070, 0.075, 6, "g"],
+        ["H001", "L", "L2", 3, 0.065, 0.070, 0.075, 0.080, 6, "g"],
+        ["H001", "L", "L2", 3, 0.070, 0.075, 0.080, 0.085, 7, "h"],
+        ["H001", "L", "L2", 3, 0.075, 0.080, 0.085, 0.090, 7, "h"],
 
-	df_expected = pd.read_csv(StringIO(expected_output))
+        ["H001", "L", "L3", 4, 0.080, 0.085, 0.080, 0.085, 8, "i"], # XSP discontinuity
+        ["H001", "L", "L3", 4, 0.085, 0.090, 0.085, 0.090, 8, "i"],
+        ["H001", "L", "L3", 4, 0.090, 0.095, 0.090, 0.095, 9, "j"],
+        ["H001", "L", "L3", 4, 0.095, 0.100, 0.095, 0.100, 9, "j"],
 
-	assert df.compare(df_expected).empty
+        ["H001", "R", "L3", 5, 0.010, 0.015, 0.010, 0.015, 10, "k"],
+        ["H001", "R", "L3", 5, 0.015, 0.020, 0.015, 0.020, 10, "k"],
+        ["H001", "R", "L3", 5, 0.020, 0.025, 0.020, 0.025, 11, "l"],
+        ["H001", "R", "L3", 5, 0.025, 0.030, 0.025, 0.030, 11, "l"], # SLK discontinuity (overlap)
+        ["H001", "R", "L3", 6, 0.039, 0.045, 0.030, 0.036, 12, "m"],
+        ["H001", "R", "L3", 6, 0.045, 0.050, 0.036, 0.041, 13, "n"],
+        ["H001", "R", "L3", 6, 0.050, 0.055, 0.041, 0.046, 13, "n"],
 
-	assert (df.groupby("seg.id")["length"].sum() >= 0.030).all()
-	assert (df.groupby("seg.id")["length"].sum() <= 0.080).all()
+        ["H002", "L", "L1", 7, 0.000, 0.006, 0.000, 0.006, 19, "q"], # Already too small
+
+        ["H002", "R", "L4", 8, 0.000, 0.006, 0.000, 0.006, 16, "t"], # Already too small
+    ]
+).drop(columns="__original_order")
+
+
+expected_result = expected_result.set_index(
+    ["road_no", "carriageway", "xsp", "segment_index"]
+)
+
+pd.testing.assert_frame_equal(
+    result,
+    expected_result,
+    check_like =False, # ignore column order and label order
+)
 ```

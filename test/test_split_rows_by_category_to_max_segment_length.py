@@ -1,9 +1,9 @@
 
-import pandas as pd
-import numpy as np
+
 
 def test_split_rows_by_category_to_max_segment_length():
-    
+    import pandas as pd
+    import numpy as np
     from segmenter import split_rows_by_category_to_max_segment_length
     
     data_to_segment = pd.DataFrame(

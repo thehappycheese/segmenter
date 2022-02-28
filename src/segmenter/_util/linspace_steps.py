@@ -9,6 +9,8 @@ def linspace_steps(measure_from: float, measure_to: float, multiples: float, min
     - guaranteed to start at `measure_from`,
     - guaranteed to end at `measure_to`,
     - guaranteed to have at least `minimum_length` between each value, and
+        - except when `measure_from` and `measure_to` are < `minimum_length`, or if `measure_from` and `measure_to` are the same.
+        - no check is performed to ensure that `measure_from` < `measure_to`. Will produce garbage output if this is the case.
     - **mostly** aligned to integer multiples of `multiples`
 
     The `minimum_length` parameter can cause the first and last segment to be
@@ -34,6 +36,8 @@ def linspace_steps(measure_from: float, measure_to: float, multiples: float, min
 
 
     """
+    if measure_from > measure_to:
+        raise ValueError("measure from must be less than measure to")
 
     left  = np.ceil (measure_from / multiples)
     right = np.floor(measure_to   / multiples)

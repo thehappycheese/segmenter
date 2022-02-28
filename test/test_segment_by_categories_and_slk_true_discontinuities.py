@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as np
 
 
-def test_segbycat_and_slk_and_true():
+def test_segment_by_categories_and_slk_true_discontinuities():
     from segmenter import segment_by_categories_and_slk_true_discontinuities
-    # discontinuity at SLK 
+    
     data_to_segment = pd.DataFrame(
         columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
         data=[

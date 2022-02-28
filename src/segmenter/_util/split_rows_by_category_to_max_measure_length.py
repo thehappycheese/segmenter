@@ -13,7 +13,7 @@ def split_rows_by_category_to_max_segment_length(
 ) -> pandas.DataFrame:
     """
     Split rows by category, then into segments of even length.
-    Segments will be at integer multiples of `max_segment_length`.
+    The SLK of each segment will be at integer multiples of `max_segment_length`.
 
     Other columns of the dataframe are ignored.
     

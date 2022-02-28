@@ -1,4 +1,3 @@
-from ._HS_lite.homogeneous_segmentation import homogenous_segmentation
 from ._util.by_category import (
 	segment_by_categories_and_slk_discontinuities,
 	segment_by_categories_and_slk_true_discontinuities
