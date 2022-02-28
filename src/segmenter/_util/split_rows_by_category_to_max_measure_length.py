@@ -25,7 +25,7 @@ def split_rows_by_category_to_max_segment_length(
         measure_true (tuple[str,str]):        column names of true measure to segment by; eg ("true_from", "true_to")
         categories (list[str]):               column names of categories to segment by; eg ["road", "cwy"]
         max_segment_length (float):           This is the target segment length. May not be achieved at the segment ends. Segments will be made at integer multiples of this value.
-        min_segment_length (float, optional): Segments shorter than this will be dropped merged with adjacent segments. Only happens to the first and last observation in each segment id. Default is Zero.
+        min_segment_length (float, optional): Segments shorter than this will be merged with adjacent segments. Only happens to the first and last observation in each segment id. Default is Zero.
     Returns:
         pandas.DataFrame: 
     """

@@ -280,7 +280,9 @@ re-merge them using a different tool.
   - Column names of true measure to segment by; eg `("true_from", "true_to")`
 - `categories` (`list[str]`):
   - Column names of categories to segment by; eg `["road", "cwy"]`
-- `min_segment_length` (`float`, optional): Segments shorter than this will be dropped merged with adjacent segments. Only happens to the first and last observation in each segment id. Default is Zero.
+- `min_segment_length` (`float`, optional): Segments shorter than this will be
+  merged with adjacent segments. Only happens to the first and last observation
+  in each segment id. Default is Zero.
 - `max_segment_length` (`float`):
   - This is the target segment length. For each row in the output
     `max_segment_length == slk_to - slk_from`
