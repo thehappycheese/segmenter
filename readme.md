@@ -62,7 +62,7 @@ You can use the following command to install the latest version from the main
 branch
 
 ```bash
-pip install git+https://github.com/thehappycheese/segmenter.git#egg=segmenter
+pip install "https://github.com/thehappycheese/segmenter/zipball/main/"
 ```
 
 Or check the [releases](https://github.com/thehappycheese/segmenter/releases)
