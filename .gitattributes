@@ -1,0 +1,2 @@
+# make gihub think ipynb files are documentation, so it doesnt report this repo as a jupyter notebook
+test/*.ipynb linguist-documentation
