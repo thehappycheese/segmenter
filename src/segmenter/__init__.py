@@ -5,3 +5,4 @@ from ._util.by_category import (
 from ._util.linspace_steps import linspace_steps;
 from ._util.split_rows_by_category_to_max_measure_length import split_rows_by_category_to_max_segment_length
 from ._util.fetch_road_network_info import fetch_road_network_info
+from ._util.split_rows_by_segmentation import split_rows_by_segmentation
