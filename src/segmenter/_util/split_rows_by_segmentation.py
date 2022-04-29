@@ -11,7 +11,8 @@ class CN:
     original_index = "original_index"
     original_df_num = "original_df_num"
     additional_index = "additional_index"
-    event_measure = "event_measure"
+    event_measure_true = "event_measure_true"
+    event_measure_slk = "event_measure_slk"
     event_type = "event_type"
 
 def split_rows_by_segmentation(
@@ -89,26 +90,34 @@ def split_rows_by_segmentation(
     # TODO: will cause wierd error if one of the slk/true  from/to are swapped. implement a check.
 
     from_events = pandas.concat([oseg, aseg])
-    from_events[CN.event_measure] = from_events[measure_true[0]]
-    from_events = from_events.sort_values([CN.event_measure, CN.original_df_num], ascending=[True, True], kind="stable")
+    from_events[CN.event_measure_true] = from_events[measure_true[0]]
+    from_events[CN.event_measure_slk] = from_events[measure_slk[0]]
+    from_events = from_events.sort_values([CN.event_measure_true, CN.original_df_num], ascending=[True, True], kind="stable")
     from_events[CN.event_type] = "from"
 
     to_events = pandas.concat([oseg, aseg])
-    to_events[CN.event_measure] = to_events[measure_true[1]]
-    to_events = to_events.sort_values([CN.event_measure, CN.original_df_num], ascending=[True, False], kind="stable")
+    to_events[CN.event_measure_true] = to_events[measure_true[1]]
+    to_events[CN.event_measure_slk] = to_events[measure_slk[1]]
+    to_events = to_events.sort_values([CN.event_measure_true, CN.original_df_num], ascending=[True, False], kind="stable")
     to_events[CN.event_type] = "to"
 
-    events = pandas.concat([from_events, to_events]).sort_values([*categories, CN.event_measure, CN.original_index], kind="stable")#.sort_values([*categories,"event_measure"], kind="stable")
+    events = pandas.concat([from_events, to_events]).sort_values([*categories, CN.event_measure_true, CN.original_index], kind="stable")#.sort_values([*categories,"event_measure"], kind="stable")
 
     results = []
     for group_index, group in events.groupby(categories):
         segments = []
         index_o = None
         index_a = None
-        last_measure = None
+        last_measure_true = None
+        last_measure_slk = None
         for row_index, row in group.iterrows():
-            if not last_measure is None and row[CN.event_measure] - last_measure > 0 and not(index_o is None and index_a is None):
-                segments.append([*group_index, last_measure, row[CN.event_measure], index_o, index_a])
+            if (
+                not last_measure_true is None 
+                and row[CN.event_measure_true] - last_measure_true > 0 
+                and row[CN.event_measure_slk] - last_measure_slk > 0 
+                and not(index_o is None and index_a is None)
+                ):
+                segments.append([*group_index, last_measure_slk, row[CN.event_measure_slk], last_measure_true, row[CN.event_measure_true], index_o, index_a])
             if row[CN.event_type] == "from":
                 if row[CN.original_df_num] == 0:
                     index_o = row[CN.original_index]
@@ -119,8 +128,15 @@ def split_rows_by_segmentation(
                     index_o = None
                 else:
                     index_a = None
-            last_measure = row[CN.event_measure]
+            last_measure_true = row[CN.event_measure_true]
+            last_measure_slk = row[CN.event_measure_slk]
         results += segments
-
-    return pandas.DataFrame(data=results, columns=[*categories, *measure_true, name_original_index, name_additional_index])
+    # TODO: sometimes `name_original_index` and `name_additional_index` are floating point and sometimes int depending if all rows have a value.
+    result =  pandas.DataFrame(
+        data=results,
+        columns=[*categories,*measure_slk, *measure_true, name_original_index, name_additional_index],
+    ) 
+    result[name_original_index]   = result[name_original_index  ].astype("f8")
+    result[name_additional_index] = result[name_additional_index].astype("f8")
+    return result
 
