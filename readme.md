@@ -15,9 +15,9 @@
     - [3.3.1. Args](#331-args)
     - [3.3.2. Returns](#332-returns)
     - [3.3.3. Example](#333-example)
-  - [3.4 `split_rows_by_segmentation()`](#34-split_rows_by_segmentation)
-  - [Args](#args)
-  - [Example](#example)
+  - [3.4. `split_rows_by_segmentation()`](#34-split_rows_by_segmentation)
+    - [3.4.1. Args](#341-args)
+    - [3.4.2. Example](#342-example)
 
 ## 1. Introduction
 
@@ -420,7 +420,7 @@ pd.testing.assert_frame_equal(
 )
 ```
 
-### 3.4 `split_rows_by_segmentation()`
+### 3.4. `split_rows_by_segmentation()`
 
 Split rows by segmentation.
 
@@ -435,7 +435,7 @@ Combines two segmentations, returning a new dataframe
   - segments in `result` do not overlap other segments in `result`
   - all start and end points of segments in `result` can be found in either `original_segmentation` or `additional_segmentation`
 
-### Args
+#### 3.4.1. Args
 
 - `original_segmentation` (`pandas.DataFrame`):
   - Dataframe to be segmented
@@ -454,7 +454,7 @@ Combines two segmentations, returning a new dataframe
   - The desired name of the column that will be output into result.
   - The value in this column will be the integer index of the row in `original_segmentation` that corresponds to each row of the `result`. Typically `'additional_index'`
 
-### Example
+#### 3.4.2. Example
 
 ```python
 import pandas as pd
