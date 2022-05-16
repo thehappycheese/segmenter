@@ -8,12 +8,12 @@ def _check_columns_present(name, df, column_names, df_name):
 
 
 class CN:
-    original_index = "original_index"
-    original_df_num = "original_df_num"
-    additional_index = "additional_index"
+    original_index     = "original_index"
+    original_df_num    = "original_df_num"
+    additional_index   = "additional_index"
     event_measure_true = "event_measure_true"
-    event_measure_slk = "event_measure_slk"
-    event_type = "event_type"
+    event_measure_slk  = "event_measure_slk"
+    event_type         = "event_type"
 
 def split_rows_by_segmentation(
         original_segmentation:pandas.DataFrame,
@@ -39,7 +39,7 @@ def split_rows_by_segmentation(
       - all start and end points of segments in `result` can be found in either `original_segmentation` or `additional_segmentation`
 
     Args:
-        original_segmentation:
+        original_segmentation: A non-overlapping (in `measure_true`) segmentation over `categories`
         additional_segmentation:
         categories: Typically `['road','carriageway']`
         measure_slk: Typically `('slk_from','slk_to')`
@@ -84,8 +84,10 @@ def split_rows_by_segmentation(
     _check_columns_present("measure_true", aseg, measure_true, "additional_segmentation")
 
     # TODO: these checks are expensive, are they strictly needed?
-    check_monotonically_increasing_segments(oseg, categories, measure_slk)
-    check_monotonically_increasing_segments(aseg, categories, measure_slk)
+    if not check_monotonically_increasing_segments(oseg, categories, measure_true):
+        raise Exception("`original_segmentation` is not monotonically increasing over `categories` and `measure_true`. Either the `original_segmentation` is self-overlapping, or it is not sorted.  Please `.sort_values([*categories, *measure_true])` before calling this function.")
+    if not check_monotonically_increasing_segments(aseg, categories, measure_true):
+        raise Exception("`additional_segmentation` is not monotonically increasing over `categories` and `measure_true`. Either the `additional_segmentation` is self-overlapping, or it is not sorted. Please `.sort_values([*categories, *measure_true])` before calling this function.")
 
     # TODO: will cause wierd error if one of the slk/true  from/to are swapped. implement a check.
 
