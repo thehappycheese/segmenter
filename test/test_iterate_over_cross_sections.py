@@ -1,8 +1,8 @@
 
 
-def test_iterate_over_cross_sections():
+def test_cross_sections():
     import pandas as pd
-    from segmenter import iterate_over_cross_sections
+    from segmenter import cross_sections
 
     data_to_iterate_over = pd.DataFrame(
         columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
@@ -36,7 +36,7 @@ def test_iterate_over_cross_sections():
         ]
     )
 
-    kk = iterate_over_cross_sections(
+    kk = cross_sections(
         data_to_iterate_over,
         ["road_no"],
         ["carriageway", "xsp"],
@@ -45,4 +45,4 @@ def test_iterate_over_cross_sections():
     )
 
 
-    print(data_to_iterate_over)
+    raise Exception("Test not written yet")
