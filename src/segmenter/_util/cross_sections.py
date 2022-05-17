@@ -3,6 +3,11 @@ from typing import Callable, Collection, Generator, Iterable, Iterator, Literal,
 import pandas as pd
 import itertools
 
+# TODO: remove
+# def iter_current_and_remaining(input:list):
+#     """Iterates over the input list, yielding the current item and the remaining items."""
+#     for i in range(len(input)):
+#         yield input[i], input[i+1:]
 
 
 class Addable:
@@ -51,6 +56,8 @@ class Addable:
 
 
 
+
+
 class ImmutableTreeMergeError(Exception):
     pass
 
@@ -61,7 +68,6 @@ class ImmutableTree:
     It is intended to be replaced with a refactored version.
     """
     __slots__ = (
-        #'_parent',
         '_children',
         '_data',
     )
@@ -71,87 +77,59 @@ class ImmutableTree:
     _data:Addable
     
 
-    def __init__(self):#, parent:Optional[ImmutableTree], children:Optional[dict[str,ImmutableTree]]=None, data:Optional[Addable]=None):
-        #self._parent   = parent
-        self._children = {} if children is None else children
-        self._data     = Addable([]) if data is None else data
-    
-    # def root(self) -> ImmutableTree:
-    #     if self._parent is None:
-    #         return self
-    #     return self._parent.root()
+    def __init__(self):
+        self._children = {}
+        self._data     = Addable([])
+
 
     def is_leaf(self) -> bool:
         return len(self._children) == 0
-    
+
+
     def is_empty_leaf(self) -> bool:
         return len(self._children) == 0 and len(self._data) == 0
 
-    def deep_clone(self, new_parent:Optional[ImmutableTree]) -> ImmutableTree:
-        clone = ImmutableTree(new_parent)
+    def deep_clone(self) -> ImmutableTree:
+        clone = ImmutableTree()
         clone._data = self._data.copy()
         for key, value in self._children.items():
-            clone._children[key] = value.deep_clone(clone)
+            clone._children[key] = value.deep_clone()
         return clone
 
     def prune(self) -> Optional[ImmutableTree]:
-        if len(self._children) == 0 and len(self._data) == 0:
+        result = self.deep_clone()
+        result._children = {
+            child_name:child_pruned 
+            for child_name, child in result._children.items() 
+            if (child_pruned:=child.prune()) is not None
+        }
+        if len(result._children) == 0 and len(result._data) == 0:
             return None
-        else:
-            result = self.deep_clone(self._parent)
-            result._children = {
-                child_name:child_pruned 
-                for child_name, child in result._children.items() 
-                if (child_pruned:=child.prune()) is not None
-            }
-            return result
+        return result
 
     def add_data(self, path_values:list[str], data:Addable) -> ImmutableTree:
-
-        result = self.deep_clone(self._parent)
-
+        result = self.deep_clone()
         pointer = result
-
         for path_value in path_values:
             if path_value not in pointer._children:
-                pointer._children[path_value] = ImmutableTree(pointer).add_data(path_values, data)
-            else:
-                pointer = pointer._children[path_value]
+                pointer._children[path_value] = ImmutableTree()
+            pointer = pointer._children[path_value]
         pointer._data += data
-        
-        return result.prune()
+        return result_pruned if (result_pruned:=result.prune()) else ImmutableTree()
     
 
     def remove_data(self, node_values:list[str], data:Addable) -> ImmutableTree:
         return self.add_data(node_values, -data)
-        # if len(node_values) == 0:
-        #     if len(data) == 0:
-        #         return self
-        #     else:
-        #         result = self.deep_clone(self._parent)
-        #         result._data -= data
-        #         return result
-        
 
-        # node_value, *node_values = node_values
-
-        # if node_value in self._children:
-        #     result        :ImmutableTree = self.deep_clone(self._parent)
-        #     result._children[node_value] = result._children[node_value].remove_data(node_values, data)
-        #     if result._children[node_value].is_empty_leaf():
-        #         del result._children[node_value]
-        #     return result
-        
-        # return self
     
     def merge(self, other:ImmutableTree) -> ImmutableTree:
         
         if self.is_leaf() and other.is_leaf():
-            result = self.deep_clone(self._parent)
+            result = self.deep_clone()
             result._data += other._data
             return result
         
-        result = self.deep_clone(self._parent)
+        result = self.deep_clone()
 
         if not all(key in other._children for key in self._children):
             raise ImmutableTreeMergeError(f"Cannot merge trees with different node sets: {self} {other}")
@@ -160,15 +138,17 @@ class ImmutableTree:
             if key in result._children:
                 result._children[key] = result._children[key].merge(value)
             else:
-                raise ImmutableTreeMergeError(f"{key} not in subtree {self} of {self.root()}")
+                raise ImmutableTreeMergeError(f"{key} not in ImmutableTree {self}")
         return result
 
+
     def map(self, func:Callable) -> ImmutableTree:
-        result = self.deep_clone(self._parent)
+        result = self.deep_clone()
         result._data = self._data.map(func)
         for key, value in self._children.items():
             result._children[key] = value.map(func)
         return result
+
 
     def __str__(self):
         data = ' '.join(str(item) for item in self._data) if len(self._data) > 0 else ''
@@ -180,6 +160,7 @@ class ImmutableTree:
     def __repr__(self):
         return self.__str__()
 
+
     def get_leaf_data(self, child_name_path:Optional[list[str]]=None) -> Generator[tuple[list[str], Addable], None, None]:
         child_name_path = [] if child_name_path is None else child_name_path
         if self.is_leaf():
@@ -187,6 +168,7 @@ class ImmutableTree:
         else:
             for child_name, child in self._children.items():
                 yield from child.get_leaf_data([*child_name_path, child_name])
+
 
     def get_row_data(self, child_name_path:Optional[list[str]]=None):
         child_name_path = [] if child_name_path is None else child_name_path
@@ -197,10 +179,12 @@ class ImmutableTree:
             for child_name, child in self._children.items():
                 yield from child.get_row_data([child_name, *child_name_path])
 
+
     def get_depth(self) -> int:
         if self.is_leaf():
             return 0
         return 1 + max(child.get_depth() for child in self._children.values())
+
 
     def as_dataframe(self) -> pd.DataFrame:
         rows = []
@@ -221,8 +205,7 @@ def cross_sections(
 )->pd.DataFrame:
     
     output_rows = []
-    group_counter = 0
-    for group_index, group in segmentation.groupby(group_categories):
+    for group_counter, (group_index, group) in enumerate(segmentation.groupby(group_categories)):
         
         group = group[[*group_categories, *cross_section_categories, *measure_true, *measure_slk]]#.reset_index(drop=True)
 
@@ -241,7 +224,7 @@ def cross_sections(
         events["event_measure_diff"] = events["event_measure"].diff().fillna(0)
 
         past_trees = []
-        current_tree = ImmutableTree(None)
+        current_tree = ImmutableTree()
         for index, row in events.iterrows():
             if row["event_type"]=="start":
                 current_tree = current_tree.add_data(row[cross_section_categories], Addable([(0,index)]))
@@ -299,12 +282,21 @@ def cross_sections(
                         *child_data_sub
                     ])
                     #print(new_row)
-    columns = ["group_number", "cross_section_number", *group_categories, *cross_section_categories, *measure_true, "original_index", "overlap"]
-    #print(columns)
-    return pd.DataFrame(
+    
+    result = pd.DataFrame(
         data=output_rows,
-        columns=columns
+        columns=["__group_number__", "cross_section_number", *group_categories, *cross_section_categories, *measure_true, "original_index", "overlap"]
     )
-           
+
+    result.loc[:,"cross_section_number"] = (
+        result.loc[:,"cross_section_number"]
+        +
+        result[["__group_number__"]].join(
+            (result.groupby("__group_number__")["cross_section_number"].max()+1).cumsum().shift(1, fill_value=0),
+            on="__group_number__"
+        ).loc[:,"cross_section_number"]
+    )#.astype("u8")
+
+    return result.drop(columns=["__group_number__"])
 
 
