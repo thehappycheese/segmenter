@@ -7,4 +7,4 @@ from ._util.split_rows_by_category_to_max_measure_length import split_rows_by_ca
 from ._util.fetch_road_network_info import fetch_road_network_info
 from ._util.split_rows_by_segmentation import split_rows_by_segmentation
 
-from ._util.cross_sections import cross_sections
+from ._util.cross_sections.cross_sections import cross_sections, cross_sections_normalised

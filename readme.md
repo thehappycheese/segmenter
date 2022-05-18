@@ -18,6 +18,7 @@
   - [3.4. `split_rows_by_segmentation()`](#34-split_rows_by_segmentation)
     - [3.4.1. Args](#341-args)
     - [3.4.2. Example](#342-example)
+  - [3.5. `cross_sections_normalised()`](#35-cross_sections_normalised)
 
 ## 1. Introduction
 
@@ -528,4 +529,125 @@ pd.testing.assert_frame_equal(
     expected_result,
     check_like=False, # ignore column order and label order
 )
+```
+
+### 3.5. `cross_sections_normalised()`
+
+Takes a `segmentation` dataframe and returns a tuple of two dataframes
+(`group_table`, `cross_section_table`).
+
+See also the `cross_sections()` function which performs the same task but
+returns a single dataframe. Segmentation is a self-overlapping dataset
+containing a categorical index, and a linear spatial index.
+
+For example, a road surface dataset may have
+
+- a categorical index `["ROAD_NUMBER"]`
+- a cross-sectional index `["CARRIAGEWAY", "LANE_NUMBER"]
+- and a spatial index ["TRUE_CHAINAGE_FROM", "TRUE_CHAINAGE_TO"]
+- (and an auxiliary spatial index ["SLK_CHAINAGE_FROM", "SLK_CHAINAGE_TO"])
+
+This algorithm would then return a "cross section" along each "ROAD_NUMBER" at
+each change of "CARRIAGEWAY" and "LANE_NUMBER".
+
+```text
+┌──────────────────────────────────────────────────────────────────────────────────────┐
+│Road                                     ┌─────────────────────────────────────┐      │
+│                                         │Carriageway = Left                   │      │
+│                                         │                   ┌───────────────┐ │      │
+│                                         │                   │Lane=L3        │ │      │
+│ ┌─────────────────────────────────────┐ │                   └───────────────┘ │      │
+│ │Carriageway = Single                 │ │ ┌───────────────┐ ┌───────────────┐ │      │
+│ │                   ┌───────────────┐ │ │ │Lane=L2        │ │Lane=L2        │ │      │
+│ │                   │ Lane=L2       │ │ │ └───────────────┘ └───────────────┘ │      │
+│ │                   └───────────────┘ │ │ ┌───────────────┐ ┌───────────────┐ │      │
+│ │ ┌───────────────┐ ┌───────────────┐ │ │ │Lane=L1        │ │Lane=L1        │ │      │
+│ │ │Lane=L1        │ │Lane=L1        │ │ │ └───────────────┘ └───────────────┘ │      │
+│ │ └───────────────┘ └───────────────┘ │ └─────────────────────────────────────┘      │
+│ │ ┌───────────────┐ ┌───────────────┐ │ ┌─────────────────────────────────────┐      │
+│ │ │Lane=R1        │ │Lane=R1        │ │ │Carriageway = Right                  │      │
+│ │ └───────────────┘ └───────────────┘ │ │ ┌───────────────┐ ┌───────────────┐ │      │
+│ └─────────────────────────────────────┘ │ │Lane=R1        │ │Lane=R1        │ │      │
+│                                         │ └───────────────┘ └───────────────┘ │      │
+│                                         │ ┌───────────────┐ ┌───────────────┐ │      │
+│                                         │ │Lane=R2        │ │Lane=R2        │ │      │
+│                                         │ └───────────────┘ └───────────────┘ │      │
+│                                         └─────────────────────────────────────┘      │
+└──────────────────────────────────────────────────────────────────────────────────────┘
+Sectioning by ["Road"] and cross section by ["Carriageway", "Lane"] would result in Sections 0 to 3 below:
+   ⮤ Section 0        ⮤ Section 1        ⮤ Section 2        ⮤ Section 3
+     S:(L1,R1)           S:(L2,L1,R1)       L:(L1,L2)          L:(L1,L2,L3)
+                                            R:(R1,R2)          R:(R1,R2)
+Sectioning by ["Road", "Carriageway"] and cross section by ["Lane"] would result Sections 0 to 5 below:
+
+   ⮤ Section 0        ⮤ Section 1        ⮤ Section 2        ⮤ Section 3
+     S:(L1,R1)           S:(L2,L1,R1)       L:(L1,L2)          L:(L1,L2,L3)
+                                          ⮤ Section 4        ⮤ Section 5
+                                            R:(R1,R2)          R:(R1,R2)
+```
+
+---
+
+for example given the dataframe `sd`
+
+```text
+       ROAD_NO  SLK_FROM  SLK_TO CWAY  TRUE_FROM  TRUE_TO INV_TYPE  XSP
+0         H001      0.00    0.04    L       0.00     0.04     SULA   L1
+1         H001      0.00    0.04    L       0.00     0.04     SULA   L2
+2         H001      0.04    0.06    L       0.04     0.06     SULA   L1
+3         H001      0.04    0.06    L       0.04     0.06     SULA   L2
+4         H001      0.04    0.06    L       0.04     0.06     SULA   L3
+...        ...       ...     ...  ...        ...      ...      ...  ...
+137643    H924      6.80    7.80    S       6.80     7.80     SULA   L1
+137644    H924      6.80    7.80    S       6.80     7.80     SULA   R1
+137645    H924      6.80    7.80    S       6.80     7.80     SUSH    R
+```
+
+```python
+from segmenter import cross_sections_normalised
+
+group_table, cross_section_table = cross_sections_normalised(
+    segmentation             = sd[sd["ROAD_NO"].isin({"H001","H002"})],
+    group_categories         = ["ROAD_NO","CWAY"],
+    cross_section_categories = ["XSP"],
+    measure_slk              = ("SLK_FROM", "SLK_TO"),
+    measure_true             = ("TRUE_FROM", "TRUE_TO"),
+)
+```
+
+`group_table` contains the following columns:
+
+```text
+      cross_section_number ROAD_NO CWAY  TRUE_FROM  TRUE_TO  SLK_FROM  SLK_TO
+0                        0    H001    L       0.00     0.04      0.00    0.04
+2                        1    H001    L       0.04     0.06      0.04    0.06
+5                        2    H001    L       0.06     0.08      0.06    0.08
+9                        3    H001    L       0.08     0.19      0.08    0.19
+11                       4    H001    L       0.19     0.24      0.19    0.24
+...                    ...     ...  ...        ...      ...       ...     ...
+9259                  1010    H002    R      55.84    55.92     55.84   55.92
+9263                  1011    H002    R      55.92    55.94     55.92   55.94
+9266                  1012    H002    R      55.94    55.99     55.94   55.99
+9270                  1013    H002    R      55.99    56.01     55.99   56.01
+9273                  1014    H002    R      56.01    56.04     56.01   56.04
+[983 rows x 7 columns]
+```
+
+`cross_section_table` contains the following columns:
+
+```text
+      cross_section_number XSP  original_index  overlap
+0                        0  L1               0     0.04
+1                        0  L2               1     0.04
+2                        1  L1               2     0.02
+3                        1  L2               3     0.02
+4                        1  L3               4     0.02
+...                    ...  ..             ...      ...
+9270                  1013   L            9278     0.02
+9271                  1013  R1            9279     0.02
+9272                  1013  R2            9280     0.02
+9273                  1014   L            9281     0.03
+9274                  1014  R1            9282     0.03
+
+[9275 rows x 4 columns]
 ```
