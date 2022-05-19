@@ -583,6 +583,7 @@ Sectioning by ["Road"] and cross section by ["Carriageway", "Lane"] would result
 Sectioning by ["Road", "Carriageway"] and cross section by ["Lane"] would result Sections 0 to 5 below:
    ⮤ Section 0        ⮤ Section 1        ⮤ Section 2        ⮤ Section 3
      S:(L1,R1)           S:(L2,L1,R1)       L:(L1,L2)          L:(L1,L2,L3)
+
                                           ⮤ Section 4        ⮤ Section 5
                                             R:(R1,R2)          R:(R1,R2)
 ```
@@ -604,6 +605,8 @@ For example given the dataframe `sd`
 137645    H924     S    R      6.80    7.80       6.80     7.80
 ```
 
+The cross sections can be found like this:
+
 ```python
 from segmenter import cross_sections_normalised
 
@@ -616,7 +619,7 @@ group_table, cross_section_table = cross_sections_normalised(
 )
 ```
 
-`group_table` contains the following columns:
+The resulting `group_table` contains the following columns:
 
 ```text
       cross_section_number ROAD_NO CWAY  TRUE_FROM  TRUE_TO  SLK_FROM  SLK_TO
@@ -634,7 +637,7 @@ group_table, cross_section_table = cross_sections_normalised(
 [983 rows x 7 columns]
 ```
 
-`cross_section_table` contains the following columns:
+The resulting `cross_section_table` contains the following columns:
 
 ```text
       cross_section_number XSP  original_index  overlap

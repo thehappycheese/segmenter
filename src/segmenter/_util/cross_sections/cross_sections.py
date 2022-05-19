@@ -185,11 +185,12 @@ def cross_sections_normalised(
     For example, a road surface dataset may have
 
     - a categorical index `["ROAD_NUMBER"]`
-    - a cross-sectional index `["CARRIAGEWAY", "LANE_NUMBER"]
-    - and a spatial index ["TRUE_CHAINAGE_FROM", "TRUE_CHAINAGE_TO"]
-    - (and an auxiliary spatial index ["SLK_CHAINAGE_FROM", "SLK_CHAINAGE_TO"])
+    - a cross-sectional index `["CARRIAGEWAY", "LANE_NUMBER"]`
+    - and a spatial index `["TRUE_CHAINAGE_FROM", "TRUE_CHAINAGE_TO"]`
+    - (and an auxiliary spatial index `["SLK_CHAINAGE_FROM", "SLK_CHAINAGE_TO"]`)
 
-    This algorithm would then return a "cross section" along each "ROAD_NUMBER" at each change of "CARRIAGEWAY" and "LANE_NUMBER".
+    This algorithm would then return a "cross section" along each `"ROAD_NUMBER"` at
+    each change of `"CARRIAGEWAY"` and `"LANE_NUMBER"`.
 
     ```text
     ┌──────────────────────────────────────────────────────────────────────────────────────┐
@@ -233,7 +234,23 @@ def cross_sections_normalised(
 
     ---
 
-    for example 
+    For example given the dataframe `sd`
+
+    ```text
+        ROAD_NO  CWAY  XSP  SLK_FROM  SLK_TO  TRUE_FROM  TRUE_TO
+    0         H001     L   L1      0.00    0.04       0.00     0.04
+    1         H001     L   L2      0.00    0.04       0.00     0.04
+    2         H001     L   L1      0.04    0.06       0.04     0.06
+    3         H001     L   L2      0.04    0.06       0.04     0.06
+    4         H001     L   L3      0.04    0.06       0.04     0.06
+    ...        ...   ...  ...       ...     ...        ...      ...
+    137643    H924     S   L1      6.80    7.80       6.80     7.80
+    137644    H924     S   R1      6.80    7.80       6.80     7.80
+    137645    H924     S    R      6.80    7.80       6.80     7.80
+    ```
+
+    The cross sections can be found like this:
+
     ```python
     group_table, cross_section_table = cross_sections_normalised(
         segmentation             = sd[sd["ROAD_NO"].isin({"H001","H002"})],
@@ -244,7 +261,7 @@ def cross_sections_normalised(
     )
     ```
 
-    `group_table` contains the following columns:
+    The resulting `group_table` contains the following columns:
 
     ```text
           cross_section_number ROAD_NO CWAY  TRUE_FROM  TRUE_TO  SLK_FROM  SLK_TO
@@ -263,7 +280,7 @@ def cross_sections_normalised(
     [983 rows x 7 columns]
     ```
 
-    `cross_section_table` contains the following columns:
+    The resulting `cross_section_table` contains the following columns:
 
     ```text
           cross_section_number XSP  original_index  overlap
