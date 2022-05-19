@@ -537,18 +537,18 @@ Takes a `segmentation` dataframe and returns a tuple of two dataframes
 (`group_table`, `cross_section_table`).
 
 See also the `cross_sections()` function which performs the same task but
-returns a single dataframe. Segmentation is a self-overlapping dataset
+returns a single dataframe. `segmentation` is a self-overlapping dataset
 containing a categorical index, and a linear spatial index.
 
 For example, a road surface dataset may have
 
 - a categorical index `["ROAD_NUMBER"]`
-- a cross-sectional index `["CARRIAGEWAY", "LANE_NUMBER"]
-- and a spatial index ["TRUE_CHAINAGE_FROM", "TRUE_CHAINAGE_TO"]
-- (and an auxiliary spatial index ["SLK_CHAINAGE_FROM", "SLK_CHAINAGE_TO"])
+- a cross-sectional index `["CARRIAGEWAY", "LANE_NUMBER"]`
+- and a spatial index `["TRUE_CHAINAGE_FROM", "TRUE_CHAINAGE_TO"]`
+- (and an auxiliary spatial index `["SLK_CHAINAGE_FROM", "SLK_CHAINAGE_TO"]`)
 
-This algorithm would then return a "cross section" along each "ROAD_NUMBER" at
-each change of "CARRIAGEWAY" and "LANE_NUMBER".
+This algorithm would then return a "cross section" along each `"ROAD_NUMBER"` at
+each change of `"CARRIAGEWAY"` and `"LANE_NUMBER"`.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────────────┐
@@ -574,12 +574,13 @@ each change of "CARRIAGEWAY" and "LANE_NUMBER".
 │                                         │ └───────────────┘ └───────────────┘ │      │
 │                                         └─────────────────────────────────────┘      │
 └──────────────────────────────────────────────────────────────────────────────────────┘
+
 Sectioning by ["Road"] and cross section by ["Carriageway", "Lane"] would result in Sections 0 to 3 below:
    ⮤ Section 0        ⮤ Section 1        ⮤ Section 2        ⮤ Section 3
      S:(L1,R1)           S:(L2,L1,R1)       L:(L1,L2)          L:(L1,L2,L3)
                                             R:(R1,R2)          R:(R1,R2)
-Sectioning by ["Road", "Carriageway"] and cross section by ["Lane"] would result Sections 0 to 5 below:
 
+Sectioning by ["Road", "Carriageway"] and cross section by ["Lane"] would result Sections 0 to 5 below:
    ⮤ Section 0        ⮤ Section 1        ⮤ Section 2        ⮤ Section 3
      S:(L1,R1)           S:(L2,L1,R1)       L:(L1,L2)          L:(L1,L2,L3)
                                           ⮤ Section 4        ⮤ Section 5
@@ -588,19 +589,19 @@ Sectioning by ["Road", "Carriageway"] and cross section by ["Lane"] would result
 
 ---
 
-for example given the dataframe `sd`
+For example given the dataframe `sd`
 
 ```text
-       ROAD_NO  SLK_FROM  SLK_TO CWAY  TRUE_FROM  TRUE_TO INV_TYPE  XSP
-0         H001      0.00    0.04    L       0.00     0.04     SULA   L1
-1         H001      0.00    0.04    L       0.00     0.04     SULA   L2
-2         H001      0.04    0.06    L       0.04     0.06     SULA   L1
-3         H001      0.04    0.06    L       0.04     0.06     SULA   L2
-4         H001      0.04    0.06    L       0.04     0.06     SULA   L3
-...        ...       ...     ...  ...        ...      ...      ...  ...
-137643    H924      6.80    7.80    S       6.80     7.80     SULA   L1
-137644    H924      6.80    7.80    S       6.80     7.80     SULA   R1
-137645    H924      6.80    7.80    S       6.80     7.80     SUSH    R
+       ROAD_NO  CWAY  XSP  SLK_FROM  SLK_TO  TRUE_FROM  TRUE_TO
+0         H001     L   L1      0.00    0.04       0.00     0.04
+1         H001     L   L2      0.00    0.04       0.00     0.04
+2         H001     L   L1      0.04    0.06       0.04     0.06
+3         H001     L   L2      0.04    0.06       0.04     0.06
+4         H001     L   L3      0.04    0.06       0.04     0.06
+...        ...   ...  ...       ...     ...        ...      ...
+137643    H924     S   L1      6.80    7.80       6.80     7.80
+137644    H924     S   R1      6.80    7.80       6.80     7.80
+137645    H924     S    R      6.80    7.80       6.80     7.80
 ```
 
 ```python
