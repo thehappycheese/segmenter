@@ -19,6 +19,12 @@
     - [3.4.1. Args](#341-args)
     - [3.4.2. Example](#342-example)
   - [3.5. `cross_sections_normalised()`](#35-cross_sections_normalised)
+    - [3.5.1. Arguments](#351-arguments)
+    - [3.5.2. Illustrated Example - Typical Input Data](#352-illustrated-example---typical-input-data)
+    - [3.5.3. Illustrated Example - Cross Sections over Entire Road](#353-illustrated-example---cross-sections-over-entire-road)
+    - [3.5.4. Illustrated Example - Cross Sections over each Carriageway](#354-illustrated-example---cross-sections-over-each-carriageway)
+    - [3.5.5. Illustrated Example - Cross Sections over Carriageway Breaking at Width Changes](#355-illustrated-example---cross-sections-over-carriageway-breaking-at-width-changes)
+  - [3.6. Aggregating information in the original dataframe](#36-aggregating-information-in-the-original-dataframe)
 
 ## 1. Introduction
 
@@ -540,57 +546,29 @@ See also the `cross_sections()` function which performs the same task but
 returns a single dataframe. `segmentation` is a self-overlapping dataset
 containing a categorical index, and a linear spatial index.
 
-For example, a road surface dataset may have
+#### 3.5.1. Arguments
 
-- a categorical index `["ROAD_NUMBER"]`
-- a cross-sectional index `["CARRIAGEWAY", "LANE_NUMBER"]`
-- and a spatial index `["TRUE_CHAINAGE_FROM", "TRUE_CHAINAGE_TO"]`
-- (and an auxiliary spatial index `["SLK_CHAINAGE_FROM", "SLK_CHAINAGE_TO"]`)
+- `segmentation: pandas.DataFrame`
+  - The self overlapping dataframe accross which to take cross sections
+- `group_categories:list[str]`
+- `cross_section_categories:list[str]`
+- `measure_slk:tuple[str,str]`
+  - Typically `("slk_from", "slk_to")`
+- `measure_true:tuple[str,str]`
+  - Typically `("true_from", "true_to")` but if not avaliable, can also be set to `("slk_from", "slk_to")`
+- `out_col_name_cross_section_number:str`
+  - optional, controls output column names;
+  - default `"cross_section_number",`
+- `out_col_name_original_index:str`
+  - optional, controls output column names;
+  - default `"original_index",`
+- `out_col_name_overlap_index:str`
+  - optional, controls output column names;
+  - default `"overlap",`
 
-This algorithm would then return a "cross section" along each `"ROAD_NUMBER"` at
-each change of `"CARRIAGEWAY"` and `"LANE_NUMBER"`.
+#### 3.5.2. Illustrated Example - Typical Input Data
 
-```text
-┌──────────────────────────────────────────────────────────────────────────────────────┐
-│Road                                     ┌─────────────────────────────────────┐      │
-│                                         │Carriageway = Left                   │      │
-│                                         │                   ┌───────────────┐ │      │
-│                                         │                   │Lane=L3        │ │      │
-│ ┌─────────────────────────────────────┐ │                   └───────────────┘ │      │
-│ │Carriageway = Single                 │ │ ┌───────────────┐ ┌───────────────┐ │      │
-│ │                   ┌───────────────┐ │ │ │Lane=L2        │ │Lane=L2        │ │      │
-│ │                   │ Lane=L2       │ │ │ └───────────────┘ └───────────────┘ │      │
-│ │                   └───────────────┘ │ │ ┌───────────────┐ ┌───────────────┐ │      │
-│ │ ┌───────────────┐ ┌───────────────┐ │ │ │Lane=L1        │ │Lane=L1        │ │      │
-│ │ │Lane=L1        │ │Lane=L1        │ │ │ └───────────────┘ └───────────────┘ │      │
-│ │ └───────────────┘ └───────────────┘ │ └─────────────────────────────────────┘      │
-│ │ ┌───────────────┐ ┌───────────────┐ │ ┌─────────────────────────────────────┐      │
-│ │ │Lane=R1        │ │Lane=R1        │ │ │Carriageway = Right                  │      │
-│ │ └───────────────┘ └───────────────┘ │ │ ┌───────────────┐ ┌───────────────┐ │      │
-│ └─────────────────────────────────────┘ │ │Lane=R1        │ │Lane=R1        │ │      │
-│                                         │ └───────────────┘ └───────────────┘ │      │
-│                                         │ ┌───────────────┐ ┌───────────────┐ │      │
-│                                         │ │Lane=R2        │ │Lane=R2        │ │      │
-│                                         │ └───────────────┘ └───────────────┘ │      │
-│                                         └─────────────────────────────────────┘      │
-└──────────────────────────────────────────────────────────────────────────────────────┘
-
-Sectioning by ["Road"] and cross section by ["Carriageway", "Lane"] would result in Sections 0 to 3 below:
-   ⮤ Section 0        ⮤ Section 1        ⮤ Section 2        ⮤ Section 3
-     S:(L1,R1)           S:(L2,L1,R1)       L:(L1,L2)          L:(L1,L2,L3)
-                                            R:(R1,R2)          R:(R1,R2)
-
-Sectioning by ["Road", "Carriageway"] and cross section by ["Lane"] would result Sections 0 to 5 below:
-   ⮤ Section 0        ⮤ Section 1        ⮤ Section 2        ⮤ Section 3
-     S:(L1,R1)           S:(L2,L1,R1)       L:(L1,L2)          L:(L1,L2,L3)
-
-                                          ⮤ Section 4        ⮤ Section 5
-                                            R:(R1,R2)          R:(R1,R2)
-```
-
----
-
-For example given the dataframe `sd`
+For example, a road surface dataset may look like the following
 
 ```text
        ROAD_NO  CWAY  XSP  SLK_FROM  SLK_TO  TRUE_FROM  TRUE_TO
@@ -605,19 +583,79 @@ For example given the dataframe `sd`
 137645    H924     S    R      6.80    7.80       6.80     7.80
 ```
 
-The cross sections can be found like this:
+The following image visualises this data:
+
+![s](readme_extras/01_cross_section_dataset.png)
+
+#### 3.5.3. Illustrated Example - Cross Sections over Entire Road
+
+The following code would create "cross sections" as shown by the blue squares below:
 
 ```python
 from segmenter import cross_sections_normalised
-
 group_table, cross_section_table = cross_sections_normalised(
-    segmentation             = sd[sd["ROAD_NO"].isin({"H001","H002"})],
-    group_categories         = ["ROAD_NO","CWAY"],
-    cross_section_categories = ["XSP"],
-    measure_slk              = ("SLK_FROM", "SLK_TO"),
-    measure_true             = ("TRUE_FROM", "TRUE_TO"),
+    segmentation             = sd,
+    group_categories         = ["ROAD_NO","CWAY"],         # Road Number (eg H001) and Carriageway (Left Right Single)
+    cross_section_categories = ["XSP"],                    # Lane Number (L1, L2, L3 etc)
+    measure_slk              = ("SLK_FROM", "SLK_TO"),     # Auxiliary longitudinal measure kilometres - stable
+    measure_true             = ("TRUE_FROM", "TRUE_TO"),   # Actual longitudinal measure - changes when road is realigned
 )
 ```
+
+![Cross Sections over Entire Road](readme_extras/02_cross_section_road.png)
+
+The resulting `group_table` contains the following columns:
+
+```text
+       cross_section_number ROAD_NO  TRUE_FROM  TRUE_TO  SLK_FROM  SLK_TO
+0                         0    H001       0.00     0.03      0.00    0.03
+4                         1    H001       0.03     0.04      0.03    0.04
+9                         2    H001       0.04     0.06      0.04    0.06
+15                        3    H001       0.06     0.08      0.06    0.08
+22                        4    H001       0.08     0.16      0.08    0.16
+...                     ...     ...        ...      ...       ...     ...
+10722                   875    H002      55.92    55.94     55.92   55.94
+10729                   876    H002      55.94    55.99     55.94   55.99
+10737                   877    H002      55.99    56.00     55.99   56.00
+10743                   878    H002      56.00    56.01     56.00   56.01
+10748                   879    H002      56.01    56.04     56.01   56.04
+
+[880 rows x 6 columns]
+```
+
+The resulting `cross_section_table` contains the following columns:
+
+```text
+       cross_section_number CWAY XSP  original_index  overlap
+0                         0    L  L1               0     0.03
+1                         0    L  L2               1     0.03
+2                         0    R  R1            5373     0.03
+3                         0    R  R2            5374     0.03
+4                         1    L  L1               0     0.01
+...                     ...  ...  ..             ...      ...
+10747                   878    L  L2            7672     0.01
+10748                   879    L  L1            7671     0.03
+10749                   879    L  L2            7672     0.03
+10750                   879    R   L            9281     0.03
+10751                   879    R  R1            9282     0.03
+
+[10752 rows x 5 columns]
+```
+
+#### 3.5.4. Illustrated Example - Cross Sections over each Carriageway
+
+```python
+from segmenter import cross_sections_normalised
+group_table, cross_section_table = cross_sections_normalised(
+    segmentation             = sd,
+    group_categories         = ["ROAD_NO"],                # Road Number (eg H001)
+    cross_section_categories = ["CWAY", "XSP"],            # Carriageway (Left Right Single) Lane Number (L1, L2, L3 etc)
+    measure_slk              = ("SLK_FROM", "SLK_TO"),     # Auxiliary longitudinal measure kilometres - stable
+    measure_true             = ("TRUE_FROM", "TRUE_TO"),   # Actual longitudinal measure - changes when road is realigned
+)
+```
+
+![Cross Sections over each Carriageway](readme_extras/03_cross_section_carriageway.png)
 
 The resulting `group_table` contains the following columns:
 
@@ -656,7 +694,64 @@ The resulting `cross_section_table` contains the following columns:
 [9275 rows x 4 columns]
 ```
 
+#### 3.5.5. Illustrated Example - Cross Sections over Carriageway Breaking at Width Changes
+
+```python
+from segmenter import cross_sections_normalised
+
+# create field that combines surface width and lane number
+sd["XSP_LW"] = sd["XSP"] + "_" + sd["LANE_WIDTH"].astype("str")
+
+group_table, cross_section_table = cross_sections_normalised(
+    segmentation             = sd,
+    group_categories         = ["ROAD_NO"],                # Road Number (eg H001)
+    cross_section_categories = ["CWAY", "XSP_LW"],         # Carriageway (Left Right Single) Lane Number+Lane Width (L1, L2, L3 etc)
+    measure_slk              = ("SLK_FROM", "SLK_TO"),     # Auxiliary longitudinal measure kilometres - stable
+    measure_true             = ("TRUE_FROM", "TRUE_TO"),   # Actual longitudinal measure - changes when road is realigned
+)
+```
+
+![Cross Sections Including Carriageway Lane Number and Lane Width](readme_extras/04_cross_section_with_width.png)
+
+```text
+       cross_section_number ROAD_NO  TRUE_FROM  TRUE_TO  SLK_FROM  SLK_TO
+0                         0    H001       0.00     0.03      0.00    0.03
+4                         1    H001       0.03     0.04      0.03    0.04
+9                         2    H001       0.04     0.06      0.04    0.06
+15                        3    H001       0.06     0.08      0.06    0.08
+22                        4    H001       0.08     0.16      0.08    0.16
+...                     ...     ...        ...      ...       ...     ...
+11529                  1784    H002      55.92    55.94     55.92   55.94
+11536                  1785    H002      55.94    55.99     55.94   55.99
+11544                  1786    H002      55.99    56.00     55.99   56.00
+11550                  1787    H002      56.00    56.01     56.00   56.01
+11555                  1788    H002      56.01    56.04     56.01   56.04
+
+[1789 rows x 6 columns]
+```
+
+
+```text
+       cross_section_number CWAY  XSP_LW  original_index  overlap
+0                         0    L  L1_3.9               0     0.03
+1                         0    L  L2_3.3               1     0.03
+2                         0    R  R1_3.5            5373     0.03
+3                         0    R  R2_3.5            5374     0.03
+4                         1    L  L1_3.9               0     0.01
+...                     ...  ...     ...             ...      ...
+11554                  1787    L  L2_3.5            7672     0.01
+11555                  1788    L  L1_3.5            7671     0.03
+11556                  1788    L  L2_3.5            7672     0.03
+11557                  1788    R   L_2.5            9281     0.03
+11558                  1788    R  R1_3.5            9282     0.03
+
+[11559 rows x 5 columns]
+```
+
+### 3.6. Aggregating information in the original dataframe
+
 To aggregate information from the original `segmentation` dataframe (eg, maximum lane width, total width, oldest surface age, etc)
+The following approach could be used:
 
 ```python
 cross_sections_with_original_columns = cross_section_table.join(sd[[columns_of_interest, ...]], on="original_index")
