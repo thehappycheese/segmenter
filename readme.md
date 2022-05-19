@@ -655,3 +655,11 @@ The resulting `cross_section_table` contains the following columns:
 
 [9275 rows x 4 columns]
 ```
+
+To aggregate information from the original `segmentation` dataframe (eg, maximum lane width, total width, oldest surface age, etc)
+
+```python
+cross_sections_with_original_columns = cross_section_table.join(sd[[columns_of_interest, ...]], on="original_index")
+cross_sections_aggregated = cross_sections_with_original_columns.groupby("cross_section_number").aggregate(...)
+result = group_table.join(cross_sections_aggregated, on="cross_section_number")
+```
