@@ -26,7 +26,7 @@ def cross_sections(
     measure_true:tuple[str,str],
     out_col_name_cross_section_number:str = "cross_section_number",
     out_col_name_original_index:str = "original_index",
-    out_col_name_overlap_index:str = "overlap",
+    out_col_name_overlap:str = "overlap",
 )->pd.DataFrame:
 
     """
@@ -39,14 +39,14 @@ def cross_sections(
         group = group[[*group_categories, *cross_section_categories, *measure_true, *measure_slk]]#.reset_index(drop=True)
 
         # capture segment start events, sort ascending
-        start_events = group.copy().sort_values(by=cross_section_categories, ascending=True)
+        start_events: pd.DataFrame = group.copy().sort_values(by=cross_section_categories, ascending=True)
         start_events[CN.event_measure_true] = start_events[measure_true[0]]
         start_events[CN.event_measure_slk]  = start_events[measure_slk[0]]
         start_events[CN.event_type]         = "start"
         start_events[CN.event_effect]       = +1
         
         # capture segment end events, sort decending
-        end_events = group.copy().sort_values(by=cross_section_categories, ascending=False)
+        end_events: pd.DataFrame = group.copy().sort_values(by=cross_section_categories, ascending=False)
         end_events[CN.event_measure_true] = end_events[measure_true[1]]
         end_events[CN.event_measure_slk]  = end_events[measure_slk[1]]
         end_events[CN.event_type]         = "end"
@@ -70,18 +70,18 @@ def cross_sections(
         past_trees = []
         current_tree = ImmutableTree()
         for index, row in events.iterrows():
-            csc:list[str] = row[cross_section_categories]
+            csc:list[str] = row[cross_section_categories].to_list()
             if row[CN.event_type]=="start":
                 current_tree = current_tree.add_data(csc, Addable([(index, 1)]))
                 past_trees.append(current_tree)
             elif row[CN.event_type]=="end":
                 current_tree = current_tree.remove_data(csc, Addable([(index, 1)]))
                 past_trees.append(current_tree)
-        events[CN.event_trees] = [item for item in past_trees] # TODO: why list comprehension
+        events[CN.event_trees] = past_trees
 
         # pair down transitions such that we only capture non-zero length cross-sections
         transitions:list[Transition] = []
-        #last_index = events.index[0]
+        # last_index = events.index[0]
         last_row = events.iloc[0]
         for _index, row in events.iloc[1:].iterrows():
             if row[CN.event_measure_diff] > 0:
@@ -123,18 +123,18 @@ def cross_sections(
         
         group_index_list = [group_index] if not isinstance(group_index, tuple) else group_index
 
-        for cross_section_number, (transition) in enumerate(merged_transitions):
-            for child_name, child_data in transition.tree.iter_leaf_data():
+        for cross_section_number, each_transition in enumerate(merged_transitions):
+            for child_name, child_data in each_transition.tree.iter_leaf_data():
                 for child_data_sub in child_data:
                     output_rows.append([
                         group_counter,
                         cross_section_number,
                         *group_index_list,
                         *child_name,
-                        transition.measure_true_from,
-                        transition.measure_true_to,
-                        transition.measure_slk_from,
-                        transition.measure_slk_to,
+                        each_transition.measure_true_from,
+                        each_transition.measure_true_to,
+                        each_transition.measure_slk_from,
+                        each_transition.measure_slk_to,
                         *child_data_sub
                     ])
     
@@ -148,7 +148,7 @@ def cross_sections(
             *measure_true,
             *measure_slk,
             out_col_name_original_index,
-            out_col_name_overlap_index
+            out_col_name_overlap
         ]
     )
 
@@ -172,7 +172,7 @@ def cross_sections_normalised(
         measure_true:                      tuple[str,str],
         out_col_name_cross_section_number: str = "cross_section_number",
         out_col_name_original_index:       str = "original_index",
-        out_col_name_overlap_index:        str = "overlap",
+        out_col_name_overlap:              str = "overlap",
     ):
     """
     Takes a `segmentation` dataframe and returns a tuple of two dataframes 
@@ -318,7 +318,7 @@ def cross_sections_normalised(
         measure_true                      = measure_true,
         out_col_name_cross_section_number = out_col_name_cross_section_number,
         out_col_name_original_index       = out_col_name_original_index,
-        out_col_name_overlap_index        = out_col_name_overlap_index
+        out_col_name_overlap        = out_col_name_overlap
     )
     # group table (each cross section id appears once)
     group_table = result[[
@@ -326,13 +326,13 @@ def cross_sections_normalised(
         *group_categories,
         *measure_true,
         *measure_slk
-    ]].drop_duplicates()
+    ]].drop_duplicates().reset_index()
     # cross section table; one row per lane per cross section id
     cross_section_table = result[[
         out_col_name_cross_section_number,
         *cross_section_categories,
         out_col_name_original_index,
-        out_col_name_overlap_index
+        out_col_name_overlap
     ]]
     
     return group_table, cross_section_table

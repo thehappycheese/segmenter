@@ -442,12 +442,21 @@ Combines two segmentations, returning a new dataframe
   - segments in `result` do not overlap other segments in `result`
   - all start and end points of segments in `result` can be found in either `original_segmentation` or `additional_segmentation`
 
+> NOTE: Original indexes are not preserved!!!! the `original_index` and
+> `additional_index` returned by this function are integer indexes which can be
+> used with `.iloc[]` (not `.loc[]`) to retrieved rows from the original
+> dataframes. This limitation may be removed in the future.
+
 #### 3.4.1. Args
 
 - `original_segmentation` (`pandas.DataFrame`):
   - Dataframe to be segmented
+  - Must be sorted by `[*categories, measure_true[0]]`
+  - `MultiIndex`s are not supported
 - `additional_segmentation` (`pandas.DataFrame`):
   - Dataframe that defines the additional segmentation boundaries to be added to `original_segmentation`
+  - Must be sorted by `[*categories, measure_true[0]]`
+  - `MultiIndex`s are not supported
 - `categories` (`list[str]`):
   - Column names of categories that define continuous runs of segments in both dataframes. Typically `['road','carriageway']`:
 - `measure_slk` (`tuple[str, str]`):

@@ -40,9 +40,9 @@ class Transition:
             If the trees are not mergeable.
         """
         return Transition(
-            measure_true_from = self.measure_true_to,
+            measure_true_from = self.measure_true_from,
             measure_true_to   = next_transition.measure_true_to,
-            measure_slk_from  = self.measure_slk_to,
+            measure_slk_from  = self.measure_slk_from,
             measure_slk_to    = next_transition.measure_slk_to,
             tree              = self.tree.merge(next_transition.tree)
         )
