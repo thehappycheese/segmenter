@@ -94,8 +94,9 @@ def cross_sections(
                         tree              = last_row[CN.event_trees],
                     )
                 )
-                # NOTE: The selection of `measure_slk_from` and `measure_slk_to` above are  wrong, but impossible to fix;
-                #       if we take a cross section over two carriageways (where the SLK system is different), then it is not possible to guarantee
+                # NOTE: The selection of `measure_slk_from` and `measure_slk_to` above are
+                #       wrong, but impossible to fix; if we take a cross section over two carriageways
+                #       (or two datasets) (where the SLK system is different), then it is not possible to guarantee
                 #       1) that we have selected a coherent SLK `from` and `to`. Maybe `from` > `to`?
                 #       2) that points of equation are correctly handled.
                 #       We can at least guarantee that the selected SLKs DO EXIST as we are not interpolating between SLKs.
@@ -326,7 +327,7 @@ def cross_sections_normalised(
         *group_categories,
         *measure_true,
         *measure_slk
-    ]].drop_duplicates().reset_index()
+    ]].drop_duplicates().reset_index(drop=True)
     # cross section table; one row per lane per cross section id
     cross_section_table = result[[
         out_col_name_cross_section_number,
