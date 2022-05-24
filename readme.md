@@ -20,11 +20,12 @@
     - [3.4.2. Example](#342-example)
   - [3.5. `cross_sections_normalised()`](#35-cross_sections_normalised)
     - [3.5.1. Arguments](#351-arguments)
-    - [3.5.2. Illustrated Example - Typical Input Data](#352-illustrated-example---typical-input-data)
-    - [3.5.3. Illustrated Example - Cross Sections over Entire Road](#353-illustrated-example---cross-sections-over-entire-road)
-    - [3.5.4. Illustrated Example - Cross Sections over each Carriageway](#354-illustrated-example---cross-sections-over-each-carriageway)
-    - [3.5.5. Illustrated Example - Cross Sections over Carriageway Breaking at Width Changes](#355-illustrated-example---cross-sections-over-carriageway-breaking-at-width-changes)
-  - [3.6. Aggregating information in the original dataframe](#36-aggregating-information-in-the-original-dataframe)
+    - [3.5.2. Returns](#352-returns)
+    - [3.5.3. Illustrated Example - Typical Input Data](#353-illustrated-example---typical-input-data)
+    - [3.5.4. Illustrated Example - Cross Sections over Entire Road](#354-illustrated-example---cross-sections-over-entire-road)
+    - [3.5.5. Illustrated Example - Cross Sections over each Carriageway](#355-illustrated-example---cross-sections-over-each-carriageway)
+    - [3.5.6. Illustrated Example - Cross Sections over Carriageway Breaking at Width Changes](#356-illustrated-example---cross-sections-over-carriageway-breaking-at-width-changes)
+    - [3.5.7. Aggregating information in the original dataframe](#357-aggregating-information-in-the-original-dataframe)
 
 ## 1. Introduction
 
@@ -552,8 +553,7 @@ Takes a `segmentation` dataframe and returns a tuple of two dataframes
 (`group_table`, `cross_section_table`).
 
 See also the `cross_sections()` function which performs the same task but
-returns a single dataframe. `segmentation` is a self-overlapping dataset
-containing a categorical index, and a linear spatial index.
+returns a single dataframe.
 
 #### 3.5.1. Arguments
 
@@ -564,7 +564,8 @@ containing a categorical index, and a linear spatial index.
 - `measure_slk:tuple[str,str]`
   - Typically `("slk_from", "slk_to")`
 - `measure_true:tuple[str,str]`
-  - Typically `("true_from", "true_to")` but if not avaliable, can also be set to `("slk_from", "slk_to")`
+  - Typically `("true_from", "true_to")` but if not avaliable, can also be set
+    to `("slk_from", "slk_to")`
 - `out_col_name_cross_section_number:str`
   - optional, controls output column names;
   - default `"cross_section_number",`
@@ -573,11 +574,33 @@ containing a categorical index, and a linear spatial index.
   - default `"original_index",`
 - `out_col_name_overlap_index:str`
   - optional, controls output column names;
-  - default `"overlap",`
+  - default `"overlap"`
 
-#### 3.5.2. Illustrated Example - Typical Input Data
+#### 3.5.2. Returns
 
-For example, a road surface dataset may look like the following
+A tuple of two dataframes: (`group_table`, `cross_section_table`)
+
+`group_table` will have columns
+
+- `cross_section_number`
+  - There will be one row per cross section number
+- the columns specified in the `group_categories` parameter
+- the linear index and auxiliary linear index specified in `measure_slk` and
+  `measure_true`
+
+`cross_section_table` will have columns
+- `cross_section_number`
+  - There will be multiple rows per cross section number
+  - Can be used to join with the `cross_section_number` column in the `group_table`
+- the columns specified in the `cross_section_categories` parameter
+- `original_index`
+  - The matching index of the dataframe `segmentation` parameter
+- `overlap`
+  - The length of the overlap between the item in the dataframe `segmentation` parameter
+
+#### 3.5.3. Illustrated Example - Typical Input Data
+
+For example, a road `surface_details` dataset may look like the following
 
 ```text
        ROAD_NO  CWAY  XSP  SLK_FROM  SLK_TO  TRUE_FROM  TRUE_TO
@@ -596,67 +619,14 @@ The following image visualises this data:
 
 ![s](readme_extras/01_cross_section_dataset.png)
 
-#### 3.5.3. Illustrated Example - Cross Sections over Entire Road
+#### 3.5.4. Illustrated Example - Cross Sections over Entire Road
 
 The following code would create "cross sections" as shown by the blue squares below:
 
 ```python
 from segmenter import cross_sections_normalised
 group_table, cross_section_table = cross_sections_normalised(
-    segmentation             = sd,
-    group_categories         = ["ROAD_NO","CWAY"],         # Road Number (eg H001) and Carriageway (Left Right Single)
-    cross_section_categories = ["XSP"],                    # Lane Number (L1, L2, L3 etc)
-    measure_slk              = ("SLK_FROM", "SLK_TO"),     # Auxiliary longitudinal measure kilometres - stable
-    measure_true             = ("TRUE_FROM", "TRUE_TO"),   # Actual longitudinal measure - changes when road is realigned
-)
-```
-
-![Cross Sections over Entire Road](readme_extras/02_cross_section_road.png)
-
-The resulting `group_table` contains the following columns:
-
-```text
-       cross_section_number ROAD_NO  TRUE_FROM  TRUE_TO  SLK_FROM  SLK_TO
-0                         0    H001       0.00     0.03      0.00    0.03
-4                         1    H001       0.03     0.04      0.03    0.04
-9                         2    H001       0.04     0.06      0.04    0.06
-15                        3    H001       0.06     0.08      0.06    0.08
-22                        4    H001       0.08     0.16      0.08    0.16
-...                     ...     ...        ...      ...       ...     ...
-10722                   875    H002      55.92    55.94     55.92   55.94
-10729                   876    H002      55.94    55.99     55.94   55.99
-10737                   877    H002      55.99    56.00     55.99   56.00
-10743                   878    H002      56.00    56.01     56.00   56.01
-10748                   879    H002      56.01    56.04     56.01   56.04
-
-[880 rows x 6 columns]
-```
-
-The resulting `cross_section_table` contains the following columns:
-
-```text
-       cross_section_number CWAY XSP  original_index  overlap
-0                         0    L  L1               0     0.03
-1                         0    L  L2               1     0.03
-2                         0    R  R1            5373     0.03
-3                         0    R  R2            5374     0.03
-4                         1    L  L1               0     0.01
-...                     ...  ...  ..             ...      ...
-10747                   878    L  L2            7672     0.01
-10748                   879    L  L1            7671     0.03
-10749                   879    L  L2            7672     0.03
-10750                   879    R   L            9281     0.03
-10751                   879    R  R1            9282     0.03
-
-[10752 rows x 5 columns]
-```
-
-#### 3.5.4. Illustrated Example - Cross Sections over each Carriageway
-
-```python
-from segmenter import cross_sections_normalised
-group_table, cross_section_table = cross_sections_normalised(
-    segmentation             = sd,
+    segmentation             = surface_details,
     group_categories         = ["ROAD_NO"],                # Road Number (eg H001)
     cross_section_categories = ["CWAY", "XSP"],            # Carriageway (Left Right Single) Lane Number (L1, L2, L3 etc)
     measure_slk              = ("SLK_FROM", "SLK_TO"),     # Auxiliary longitudinal measure kilometres - stable
@@ -664,55 +634,91 @@ group_table, cross_section_table = cross_sections_normalised(
 )
 ```
 
+![Cross Sections over Entire Road](readme_extras/02_cross_section_road.png)
+
+```text
+============================= group_table ==============================
+   cross_section_number ROAD_NO  TRUE_FROM  TRUE_TO  SLK_FROM  SLK_TO
+0                     0    H001       0.00     0.03      0.00    0.03
+1                     1    H001       0.03     0.04      0.03    0.04
+2                     2    H001       0.04     0.06      0.04    0.06
+3                     3    H001       0.06     0.08      0.06    0.08
+4                     4    H001       0.08     0.16      0.08    0.16
+...
+========================= cross_section_table ==========================
+    cross_section_number CWAY XSP  original_index  overlap
+0                      0    L  L1               0     0.03
+1                      0    L  L2               1     0.03
+2                      0    R  R1            5373     0.03
+3                      0    R  R2            5374     0.03
+4                      1    L  L1               0     0.01
+5                      1    L  L2               1     0.01
+6                      1    R  R1            5375     0.01
+7                      1    R  R2            5376     0.01
+8                      1    R  R3            5377     0.01
+9                      2    R  R1            5375     0.02
+10                     2    R  R2            5376     0.02
+11                     2    R  R3            5377     0.02
+12                     2    L  L1               2     0.02
+13                     2    L  L2               3     0.02
+14                     2    L  L3               4     0.02
+...
+```
+
+#### 3.5.5. Illustrated Example - Cross Sections over each Carriageway
+
+```python
+from segmenter import cross_sections_normalised
+group_table, cross_section_table = cross_sections_normalised(
+    segmentation             = surface_details,
+    group_categories         = ["ROAD_NO","CWAY"],         # Road Number (eg H001) and Carriageway (Left Right Single)
+    cross_section_categories = ["XSP"],                    # Lane Number (L1, L2, L3 etc)
+    measure_slk              = ("SLK_FROM", "SLK_TO"),     # Auxiliary longitudinal measure kilometres - stable
+    measure_true             = ("TRUE_FROM", "TRUE_TO"),   # Actual longitudinal measure - changes when road is realigned
+)
+```
+
 ![Cross Sections over each Carriageway](readme_extras/03_cross_section_carriageway.png)
 
-The resulting `group_table` contains the following columns:
-
 ```text
-      cross_section_number ROAD_NO CWAY  TRUE_FROM  TRUE_TO  SLK_FROM  SLK_TO
-0                        0    H001    L       0.00     0.04      0.00    0.04
-2                        1    H001    L       0.04     0.06      0.04    0.06
-5                        2    H001    L       0.06     0.08      0.06    0.08
-9                        3    H001    L       0.08     0.19      0.08    0.19
-11                       4    H001    L       0.19     0.24      0.19    0.24
-...                    ...     ...  ...        ...      ...       ...     ...
-9259                  1010    H002    R      55.84    55.92     55.84   55.92
-9263                  1011    H002    R      55.92    55.94     55.92   55.94
-9266                  1012    H002    R      55.94    55.99     55.94   55.99
-9270                  1013    H002    R      55.99    56.01     55.99   56.01
-9273                  1014    H002    R      56.01    56.04     56.01   56.04
-[983 rows x 7 columns]
+============================= group_table ==============================
+   cross_section_number ROAD_NO CWAY  TRUE_FROM  TRUE_TO  SLK_FROM  SLK_TO
+0                     0    H001    L       0.00     0.04      0.00    0.04
+1                     1    H001    L       0.04     0.06      0.04    0.06
+2                     2    H001    L       0.06     0.08      0.06    0.08
+3                     3    H001    L       0.08     0.19      0.08    0.19
+4                     4    H001    L       0.19     0.24      0.19    0.24
+...
+========================= cross_section_table ==========================
+    cross_section_number  XSP  original_index  overlap
+0                      0   L1               0     0.04
+1                      0   L2               1     0.04
+2                      1   L1               2     0.02
+3                      1   L2               3     0.02
+4                      1   L3               4     0.02
+5                      2   L1               5     0.02
+6                      2   L2               6     0.02
+7                      2   L3               7     0.02
+8                      2   L4               8     0.02
+9                      3   L1               9     0.11
+10                     3   L2              10     0.11
+11                     4   L1              11     0.05
+12                     4   L2              12     0.05
+13                     4  LL1              13     0.05
+14                     6   L1              34     0.19
+...
 ```
 
-The resulting `cross_section_table` contains the following columns:
-
-```text
-      cross_section_number XSP  original_index  overlap
-0                        0  L1               0     0.04
-1                        0  L2               1     0.04
-2                        1  L1               2     0.02
-3                        1  L2               3     0.02
-4                        1  L3               4     0.02
-...                    ...  ..             ...      ...
-9270                  1013   L            9278     0.02
-9271                  1013  R1            9279     0.02
-9272                  1013  R2            9280     0.02
-9273                  1014   L            9281     0.03
-9274                  1014  R1            9282     0.03
-
-[9275 rows x 4 columns]
-```
-
-#### 3.5.5. Illustrated Example - Cross Sections over Carriageway Breaking at Width Changes
+#### 3.5.6. Illustrated Example - Cross Sections over Carriageway Breaking at Width Changes
 
 ```python
 from segmenter import cross_sections_normalised
 
 # create field that combines surface width and lane number
-sd["XSP_LW"] = sd["XSP"] + "_" + sd["LANE_WIDTH"].astype("str")
+surface_details["XSP_LW"] = surface_details["XSP"] + "_" + surface_details["LANE_WIDTH"].astype("str")
 
 group_table, cross_section_table = cross_sections_normalised(
-    segmentation             = sd,
+    segmentation             = surface_details,
     group_categories         = ["ROAD_NO"],                # Road Number (eg H001)
     cross_section_categories = ["CWAY", "XSP_LW"],         # Carriageway (Left Right Single) Lane Number+Lane Width (L1, L2, L3 etc)
     measure_slk              = ("SLK_FROM", "SLK_TO"),     # Auxiliary longitudinal measure kilometres - stable
@@ -723,47 +729,42 @@ group_table, cross_section_table = cross_sections_normalised(
 ![Cross Sections Including Carriageway Lane Number and Lane Width](readme_extras/04_cross_section_with_width.png)
 
 ```text
-       cross_section_number ROAD_NO  TRUE_FROM  TRUE_TO  SLK_FROM  SLK_TO
-0                         0    H001       0.00     0.03      0.00    0.03
-4                         1    H001       0.03     0.04      0.03    0.04
-9                         2    H001       0.04     0.06      0.04    0.06
-15                        3    H001       0.06     0.08      0.06    0.08
-22                        4    H001       0.08     0.16      0.08    0.16
-...                     ...     ...        ...      ...       ...     ...
-11529                  1784    H002      55.92    55.94     55.92   55.94
-11536                  1785    H002      55.94    55.99     55.94   55.99
-11544                  1786    H002      55.99    56.00     55.99   56.00
-11550                  1787    H002      56.00    56.01     56.00   56.01
-11555                  1788    H002      56.01    56.04     56.01   56.04
-
-[1789 rows x 6 columns]
+============================= group_table ==============================
+   cross_section_number ROAD_NO  TRUE_FROM  TRUE_TO  SLK_FROM  SLK_TO
+0                     0    H001       0.00     0.03      0.00    0.03
+1                     1    H001       0.03     0.04      0.03    0.04
+2                     2    H001       0.04     0.06      0.04    0.06
+3                     3    H001       0.06     0.08      0.06    0.08
+4                     4    H001       0.08     0.16      0.08    0.16
+...
+========================= cross_section_table ==========================
+    cross_section_number CWAY  XSP_LW  original_index  overlap
+0                      0    L  L1_3.9               0     0.03
+1                      0    L  L2_3.3               1     0.03
+2                      0    R  R1_3.5            5373     0.03
+3                      0    R  R2_3.5            5374     0.03
+4                      1    L  L1_3.9               0     0.01
+5                      1    L  L2_3.3               1     0.01
+6                      1    R  R1_4.0            5375     0.01
+7                      1    R  R2_4.0            5376     0.01
+8                      1    R  R3_4.0            5377     0.01
+9                      2    R  R1_4.0            5375     0.02
+10                     2    R  R2_4.0            5376     0.02
+11                     2    R  R3_4.0            5377     0.02
+12                     2    L  L1_5.3               2     0.02
+13                     2    L  L2_3.9               3     0.02
+14                     2    L  L3_3.3               4     0.02
+...
 ```
 
+#### 3.5.7. Aggregating information in the original dataframe
 
-```text
-       cross_section_number CWAY  XSP_LW  original_index  overlap
-0                         0    L  L1_3.9               0     0.03
-1                         0    L  L2_3.3               1     0.03
-2                         0    R  R1_3.5            5373     0.03
-3                         0    R  R2_3.5            5374     0.03
-4                         1    L  L1_3.9               0     0.01
-...                     ...  ...     ...             ...      ...
-11554                  1787    L  L2_3.5            7672     0.01
-11555                  1788    L  L1_3.5            7671     0.03
-11556                  1788    L  L2_3.5            7672     0.03
-11557                  1788    R   L_2.5            9281     0.03
-11558                  1788    R  R1_3.5            9282     0.03
-
-[11559 rows x 5 columns]
-```
-
-### 3.6. Aggregating information in the original dataframe
-
-To aggregate information from the original `segmentation` dataframe (eg, maximum lane width, total width, oldest surface age, etc)
-The following approach could be used:
+To aggregate information from the original `segmentation` dataframe (eg, maximum
+lane width, total width, oldest surface age, etc) The following approach could
+be used:
 
 ```python
-cross_sections_with_original_columns = cross_section_table.join(sd[[columns_of_interest, ...]], on="original_index")
+cross_sections_with_original_columns = cross_section_table.join(surface_details[[columns_of_interest, ...]], on="original_index")
 cross_sections_aggregated = cross_sections_with_original_columns.groupby("cross_section_number").aggregate(...)
 result = group_table.join(cross_sections_aggregated, on="cross_section_number")
 ```
