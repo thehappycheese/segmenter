@@ -46,18 +46,21 @@ This package provides several tools to
    the requested segment size (by both splitting/repeating rows and/or merging
    rows).
 
-### 1.1. Related Project `pyroads` 
+### 1.1. Related Project `pyroads`
 
 See also segmentation functions available in `pyroads` project
-<https://github.com/shaan-nmb/pyroads>. They are similar, but have subtly
+<https://github.com/shaan-nmb/pyroads>. They are similar but slightly
 different outputs and are useful for different projects.
 
 ### 1.2. Related Project `HS`
 
 This package is a spin-off of the
-[HS (Homogeneous Segmentation) python package](https://github.com/thehappycheese/HS).
-This is a python version of the original
+[HS (Homogeneous Segmentation) python package](https://github.com/thehappycheese/HS);
+a python version of the original
 [R package - also called HS](https://cran.r-project.org/web/packages/HS/index.html).
+
+It would be nice to maintain as a single repo, but I wanted to leave the
+"package author" set to the authors of the original R package.
 
 The aim of the HS package is to segment the road network segments based on the
 two things listed below such that each segment can be reasonably represented by
@@ -86,7 +89,6 @@ pip uninstall segmenter
 ```
 
 ## 3. Usage
-
 
 ### 3.1. `segment_by_categories_and_slk_discontinuities()`
 
