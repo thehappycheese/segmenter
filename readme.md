@@ -432,20 +432,15 @@ pd.testing.assert_frame_equal(
 
 ### 3.4. `split_rows_by_segmentation()`
 
-Split rows by segmentation.
+Combines two segmentations, returning a new dataframe. The new segmentation will
 
-Combines two segmentations, returning a new dataframe
+- Have a split wherever either of the original dataframes had a split
+- Cover any area that is covered by either of the original dataframes
 
-- The result starts out the same as `original_segmentation`
-- rows are split and
-- new rows are created
-- such that
-  - the `result` 100% covers / contains `original_segmentation`
-  - the `result` 100% covers / contains `additional_segmentation`
-  - segments in `result` do not overlap other segments in `result`
-  - all start and end points of segments in `result` can be found in either `original_segmentation` or `additional_segmentation`
+> NOTE 1: Self-intersecting inputs will produce invalid results!
 
-> NOTE: Original indexes are not preserved!!!! the `original_index` and
+
+> NOTE 2: Original indexes are not preserved!!!! the `original_index` and
 > `additional_index` returned by this function are integer indexes which can be
 > used with `.iloc[]` (not `.loc[]`) to retrieved rows from the original
 > dataframes. This limitation may be removed in the future.
