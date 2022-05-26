@@ -20,15 +20,19 @@ def check_no_reversed_segments(df, measure:tuple[str,str]):
     return (df[measure[0]]<=df[measure[1]]).all()
 
 
-def check_linear_index(measure:pd.DataFrame, must_be_ordered_and_disjoint:bool) -> None:
+def check_linear_index(measure:pd.DataFrame) -> None:
     """
     Take a dataframe consisting of exactly two numerical columns,
     representing ("slk_from","slk_to") or ("true_from", "true_to")
 
-    raises and error if there is some problem with the index
+    Raises and error if there is some problem with the index
 
-    the parameter must_be_ordered_and_disjoint controls further checks required for a valid
-    ("true_from", "true_to") segmentation
+    - Non Numeric
+    - Reversed From/To
+    - Zero Length
+    - NaN
+
+    > Note: see `check_linear_index_is_ordered_and_disjoint` for more checks
 
     ### Example
 
@@ -37,8 +41,8 @@ def check_linear_index(measure:pd.DataFrame, must_be_ordered_and_disjoint:bool) 
     
     df = pd.read_excel(...)
 
-    check_linear_index(df[[ "slk_from",  "slk_to"]], must_be_ordered_and_disjoint=False)
-    check_linear_index(df[["true_from", "true_to"]], must_be_ordered_and_disjoint=True )
+    check_linear_index(df[[ "slk_from",  "slk_to"]])
+    check_linear_index(df[["true_from", "true_to"]])
     ```
     """
     column_names = ', '.join(measure.columns.to_list())
@@ -67,18 +71,27 @@ def check_linear_index(measure:pd.DataFrame, must_be_ordered_and_disjoint:bool) 
             f"The columns ({column_names}) contain at least one zero length segment"
         )
     
-    if must_be_ordered_and_disjoint:
-        if not measure.iloc[:,0].is_monotonic_increasing:
+        
+
+def check_linear_index_is_ordered_and_disjoint(df, measure:tuple[str,str], categories:list[str]):
+    """
+    Take a dataframe `df` and a tuple `measure` of the name of the two columns
+    which define a linear index. The dataframe will first be grouped by the column names categories
+    """
+
+    for group_index, group in df.groupby(categories):
+        measure_columns = group[[*measure]]
+        if not measure_columns.iloc[:,0].is_monotonic_increasing:
             raise ValueError(
-                f"The column {measure.columns[0]} is not monotonic increasing. Please try sorting your dataset by {measure.columns[0]}. Otherwise remove overlapping segments."
+                f"The column {measure[0]} is not monotonic increasing for the group {categories}:{group_index}. Please try sorting your dataset by {measure[0]}. Otherwise remove overlapping segments."
             )
             
-        if not measure.iloc[:,1].is_monotonic_increasing:
+        if not measure_columns.iloc[:,1].is_monotonic_increasing:
             raise ValueError(
-                f"The column {measure.columns[1]} is not monotonic increasing. Please try sorting your dataset by {measure.columns[0]}. Otherwise remove overlapping segments."
+                f"The column {measure[1]} is not monotonic increasing for the group {categories}:{group_index}. Please try sorting your dataset by {measure[0]}. Otherwise remove overlapping segments."
             )
         
-        if not (measure.iloc[:1,1].to_numpy() <= measure.iloc[1:,0].to_numpy()).all():
+        if not (measure_columns.iloc[:1,1].to_numpy() <= measure_columns.iloc[1:,0].to_numpy()).all():
             raise ValueError(
-                f"The columns ({column_names}) have rows which are not disjoint intervals."
-            )
+                f"The columns {measure} have rows which are not disjoint intervals for the group {categories}:{group_index}."
+        )

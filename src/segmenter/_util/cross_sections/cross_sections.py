@@ -1,7 +1,7 @@
 from __future__ import annotations
 import pandas as pd
 
-from ..check_segmentation import check_linear_index
+from ..check_segmentation import check_linear_index, check_linear_index_is_ordered_and_disjoint
 
 
 from .Addable import Addable
@@ -35,8 +35,9 @@ def cross_sections(
     Please see documentation for `cross_sections_normalised()` for the time being
     """
 
-    check_linear_index(segmentation[list(measure_slk)],  must_be_ordered_and_disjoint=False)
-    check_linear_index(segmentation[list(measure_true)], must_be_ordered_and_disjoint=True)
+    check_linear_index(segmentation[list(measure_slk)])
+    check_linear_index(segmentation[list(measure_true)])
+    check_linear_index_is_ordered_and_disjoint(segmentation, measure_true, [*group_categories, *cross_section_categories])
     
     output_rows = []
     for group_counter, (group_index, group) in enumerate(segmentation.groupby(group_categories)):

@@ -8,7 +8,7 @@ def test_check_linear_index():
     import numpy as np
     from segmenter._util.check_segmentation import check_linear_index
 
-    # passiing test
+    # passing test
     df = pd.DataFrame(
         columns=["slk_from", "slk_to"],
         data=[
@@ -16,7 +16,7 @@ def test_check_linear_index():
             [1,2],
         ],
     )
-    check_linear_index(df, must_be_ordered_and_disjoint=True)
+    check_linear_index(df)
 
 
     with pytest.raises(ValueError, match="exactly two"):
@@ -27,7 +27,7 @@ def test_check_linear_index():
                 [1,2,0],
             ],
         )
-        check_linear_index(df, must_be_ordered_and_disjoint=True)
+        check_linear_index(df)
     
     with pytest.raises(TypeError, match="not a numeric"):
         df = pd.DataFrame(
@@ -37,7 +37,7 @@ def test_check_linear_index():
                 ["1",2.0],
             ],
         )
-        check_linear_index(df, must_be_ordered_and_disjoint=True)
+        check_linear_index(df)
 
     with pytest.raises(TypeError, match="not a numeric"):
         df = pd.DataFrame(
@@ -47,7 +47,7 @@ def test_check_linear_index():
                 [1,2.0],
             ],
         )
-        check_linear_index(df, must_be_ordered_and_disjoint=True)
+        check_linear_index(df)
     
     with pytest.raises(ValueError, match="NaN"):
         df = pd.DataFrame(
@@ -57,7 +57,7 @@ def test_check_linear_index():
                 [1,np.nan],
             ],
         )
-        check_linear_index(df, must_be_ordered_and_disjoint=True)
+        check_linear_index(df)
 
     with pytest.raises(ValueError, match="first column is greater"):
         df = pd.DataFrame(
@@ -67,7 +67,7 @@ def test_check_linear_index():
                 [3,1],
             ],
         )
-        check_linear_index(df, must_be_ordered_and_disjoint=True)
+        check_linear_index(df)
 
     with pytest.raises(ValueError, match="zero length"):
         df = pd.DataFrame(
@@ -77,39 +77,72 @@ def test_check_linear_index():
                 [3,3],
             ],
         )
-        check_linear_index(df, must_be_ordered_and_disjoint=True)
+        check_linear_index(df)
+
+def test_check_linear_index_is_ordered_and_disjoint():
+    import pandas as pd
+    import numpy as np
+    from segmenter._util.check_segmentation import check_linear_index, check_linear_index_is_ordered_and_disjoint
     
-    # the following three are ok only if must_be_ordered_and_disjoint=False
+    # passing test
+    df = pd.DataFrame(
+        columns=["group_categories","slk_from", "slk_to"],
+        data=[
+            ["a",1,2],
+            ["a",2,3],
+            ["b",5,6],
+            ["b",6,7],
+        ],
+    )
+    # confirm passes regular test
+    check_linear_index(df[["slk_from", "slk_to"]])
+    # confirm fails disjoint test
+    check_linear_index_is_ordered_and_disjoint(df, measure=("slk_from", "slk_to"),categories=["group_categories"])
+
+
 
     with pytest.raises(ValueError, match="monotonic increasing"):
         df = pd.DataFrame(
-            columns=["slk_from", "slk_to"],
+            columns=["group_categories","slk_from", "slk_to"],
             data=[
-                [1,2],
-                [0,3],
+                ["a",1,2],
+                ["a",0,3],
+                ["b",5,6],
+                ["b",6,7],
             ],
         )
-        check_linear_index(df, must_be_ordered_and_disjoint=True)
-    check_linear_index(df, must_be_ordered_and_disjoint=False)
+        # confirm passes regular test
+        check_linear_index(df[["slk_from", "slk_to"]])
+        # confirm fails disjoint test
+        check_linear_index_is_ordered_and_disjoint(df, measure=("slk_from", "slk_to"),categories=["group_categories"])
+    
     
     with pytest.raises(ValueError, match="monotonic increasing"):
         df = pd.DataFrame(
-            columns=["slk_from", "slk_to"],
+            columns=["group_categories","slk_from", "slk_to"],
             data=[
-                [0,2],
-                [1,1.5],
+                ["a",1,2],
+                ["a",2,3],
+                ["b",5,7],
+                ["b",6,6.5],
             ],
         )
-        check_linear_index(df, must_be_ordered_and_disjoint=True)
-    check_linear_index(df, must_be_ordered_and_disjoint=False)
+        # confirm passes regular test
+        check_linear_index(df[["slk_from", "slk_to"]])
+        # confirm fails disjoint test
+        check_linear_index_is_ordered_and_disjoint(df, measure=("slk_from", "slk_to"),categories=["group_categories"])
     
     with pytest.raises(ValueError, match="not disjoint"):
         df = pd.DataFrame(
-            columns=["slk_from", "slk_to"],
+            columns=["group_categories","slk_from", "slk_to"],
             data=[
-                [0,2],
-                [1,3],
+                ["a",1,3],
+                ["a",3,5],
+                ["b",5,7],
+                ["b",6,8],
             ],
         )
-        check_linear_index(df, must_be_ordered_and_disjoint=True)
-    check_linear_index(df, must_be_ordered_and_disjoint=False)
+        # confirm passes regular test
+        check_linear_index(df[["slk_from", "slk_to"]])
+        # confirm fails disjoint test
+        check_linear_index_is_ordered_and_disjoint(df, measure=("slk_from", "slk_to"),categories=["group_categories"])
