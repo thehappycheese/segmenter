@@ -1,6 +1,8 @@
 from __future__ import annotations
 import pandas as pd
 
+from ..check_segmentation import check_linear_index
+
 
 from .Addable import Addable
 from .ImmutableTree import ImmutableTree, ImmutableTreeMergeError
@@ -32,6 +34,9 @@ def cross_sections(
     """
     Please see documentation for `cross_sections_normalised()` for the time being
     """
+
+    check_linear_index(segmentation[list(measure_slk)],  must_be_ordered_and_disjoint=False)
+    check_linear_index(segmentation[list(measure_true)], must_be_ordered_and_disjoint=True)
     
     output_rows = []
     for group_counter, (group_index, group) in enumerate(segmentation.groupby(group_categories)):
