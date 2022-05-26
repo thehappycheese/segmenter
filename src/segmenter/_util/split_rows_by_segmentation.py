@@ -1,6 +1,7 @@
 import pandas
 import numpy as np
-from .check_segmentation import check_monotonically_increasing_segments, check_no_reversed_segments
+
+from .check_segmentation import check_linear_index, check_linear_index_is_ordered_and_disjoint
 
 def _check_columns_present(name, df, column_names, df_name):
     if not all(item in df.columns for item in column_names):
@@ -71,11 +72,15 @@ def split_rows_by_segmentation(
     _check_columns_present("measure_slk",  additional_segmentation, measure_slk,  "additional_segmentation")
     _check_columns_present("measure_true", additional_segmentation, measure_true, "additional_segmentation")
 
-    if not check_no_reversed_segments(original_segmentation, measure_true):
-        raise ValueError(f"`original_segmentation` has reversed segments ({measure_true[0]}>{measure_true[1]}).")
 
-    if not check_no_reversed_segments(additional_segmentation, measure_true):
-        raise ValueError(f"`additional_segmentation` has reversed segments ({measure_true[0]}>{measure_true[1]}).")
+    check_linear_index(original_segmentation[list(measure_slk)])
+    check_linear_index(original_segmentation[list(measure_true)])
+    check_linear_index_is_ordered_and_disjoint(original_segmentation, measure_true, categories)
+
+    check_linear_index(additional_segmentation[list(measure_slk)])
+    check_linear_index(additional_segmentation[list(measure_true)])
+    check_linear_index_is_ordered_and_disjoint(additional_segmentation, measure_true, categories)
+    
 
     # TODO: there are problems with these next lines;
     #       the original indexes are dropped by the .loc[]
@@ -104,14 +109,6 @@ def split_rows_by_segmentation(
         })
         .copy()
     )
-
-    # TODO: these checks are expensive, are they strictly needed?
-    # furthermore; if only SLK is available, then this check will likely fail if either dataframe includes a POE.
-    # it seems that
-    if not check_monotonically_increasing_segments(oseg, categories, measure_true):
-        raise Exception("`original_segmentation` is not monotonically increasing over `categories` and `measure_true`. Either the `original_segmentation` is self-overlapping, or it is not sorted.  Please `.sort_values([*categories, *measure_true])` before calling this function.")
-    if not check_monotonically_increasing_segments(aseg, categories, measure_true):
-        raise Exception("`additional_segmentation` is not monotonically increasing over `categories` and `measure_true`. Either the `additional_segmentation` is self-overlapping, or it is not sorted. Please `.sort_values([*categories, *measure_true])` before calling this function.")
 
 
     from_events = pandas.concat([oseg, aseg])
