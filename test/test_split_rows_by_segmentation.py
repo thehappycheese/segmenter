@@ -3,6 +3,7 @@
 
 def test_split_rows_by_segmentation_without_poes():
     import pandas as pd
+    from pandas.testing import assert_frame_equal
     import numpy as np
     from segmenter import split_rows_by_segmentation
     
@@ -68,7 +69,7 @@ def test_split_rows_by_segmentation_without_poes():
         ]
     )
 
-    pd.testing.assert_frame_equal(
+    assert_frame_equal(
         result,
         expected_result,
         check_like=False, # ignore column order and label order
@@ -76,6 +77,7 @@ def test_split_rows_by_segmentation_without_poes():
 
 def test_split_rows_by_segmentation_with_poes():
     import pandas as pd
+    from pandas.testing import assert_frame_equal
     import numpy as np
     from segmenter import split_rows_by_segmentation
     
@@ -163,7 +165,7 @@ def test_split_rows_by_segmentation_with_poes():
         ]
     )
 
-    pd.testing.assert_frame_equal(
+    assert_frame_equal(
         result,
         expected_result,
         check_like=False, # ignore column order and label order
@@ -172,7 +174,11 @@ def test_split_rows_by_segmentation_with_poes():
 
 
 def test_split_rows_by_segmentation_preserves_indexes():
+    
+    # TODO: this test fails
+
     import pandas as pd
+    from pandas.testing import assert_frame_equal
     import numpy as np
     from segmenter import split_rows_by_segmentation
     
@@ -239,7 +245,7 @@ def test_split_rows_by_segmentation_preserves_indexes():
         ]
     )
 
-    pd.testing.assert_frame_equal(
+    assert_frame_equal(
         result,
         expected_result,
         check_like=False, # ignore column order and label order
