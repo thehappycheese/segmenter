@@ -63,6 +63,13 @@ def split_rows_by_segmentation(
     if additional_segmentation.index.has_duplicates:
         raise ValueError(f"`additional_segmentation` has duplicates in its index. Please use `additional_segmentation.reset_index()`")
 
+    # since we do not preserve the original indexes due to the problems explained below
+    # for now, we will force the user to use a range-index
+    if not (original_segmentation.index == pandas.RangeIndex(len(original_segmentation.index))).all():
+        raise ValueError(f"`original_segmentation` index is not a RangeIndex (0,1,2,3,...). This will cause problems downstream due to the index not being preserved. This will be fixed in the future. Please use `original_segmentation.reset_index()`")
+    if not (additional_segmentation.index == pandas.RangeIndex(len(additional_segmentation.index))).all():
+        raise ValueError(f"`additional_segmentation` index is not a RangeIndex (0,1,2,3,...). This will cause problems downstream due to the index not being preserved. This will be fixed in the future. Please use `additional_segmentation.reset_index()`")
+
     # check that all columns required by the parameters are present
     _check_columns_present("categories",   original_segmentation, categories,   "original_segmentation")
     _check_columns_present("measure_slk",  original_segmentation, measure_slk,  "original_segmentation")
