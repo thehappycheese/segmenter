@@ -3,11 +3,13 @@ import requests
 import urllib
 import math
 import pandas as pd
+from deprecated import deprecated
+
 
 DATA_SOURCE_URL = "https://mrgis.mainroads.wa.gov.au/arcgis/rest/services/OpenData/RoadAssets_DataPortal/MapServer/17/query"
 
 
-
+@deprecated(reason="This function has been moved to another package. See https://github.com/thehappycheese/fetchopendata", version="0.5.1")
 def fetch_road_network_info(
     url:str=DATA_SOURCE_URL,
     chunk_limit:Optional[int]=None,
