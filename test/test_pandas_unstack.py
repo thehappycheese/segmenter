@@ -38,7 +38,7 @@ def test_pandas_unstack():
 
     expected_df_unstack_data2.columns = expected_df_unstack_data2.columns.astype("i8").rename("xsp")
 
-    pd.util.testing.assert_frame_equal(
+    pd.testing.assert_frame_equal(
         df["data2"].unstack("xsp"),
         expected_df_unstack_data2,
     )
