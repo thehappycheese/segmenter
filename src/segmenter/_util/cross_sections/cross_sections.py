@@ -40,7 +40,11 @@ def cross_sections(
     check_linear_index_is_ordered_and_disjoint(segmentation, measure_true, [*group_categories, *cross_section_categories])
     
     output_rows = []
-    for group_counter, (group_index, group) in enumerate(segmentation.groupby(group_categories)):
+
+    # for group_counter, (group_index, group) in enumerate(segmentation.groupby(group_categories)):
+    # TODO: Triggers useless future warning: if len(group_categories) == 1 then group_counter will yield a length 1 tuple instead of a string.
+    # To suppress the warning we can do something yuck:
+    for group_counter, (group_index, group) in enumerate(segmentation.groupby(group_categories[0] if len(group_categories)==1 else group_categories)):
         
         group = group[[*group_categories, *cross_section_categories, *measure_true, *measure_slk]]#.reset_index(drop=True)
 

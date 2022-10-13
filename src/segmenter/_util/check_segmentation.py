@@ -1,6 +1,7 @@
 import pandas as pd
+from typing import List, Tuple
 
-def check_monotonically_increasing_segments(df, categories:list[str], measure:tuple[str,str]):
+def check_monotonically_increasing_segments(df, categories:List[str], measure:Tuple[str,str]):
     """
     Check that the segments are monotonically increasing;
     Every segment in each category must start at or after the end of the previous segment
@@ -13,7 +14,7 @@ def check_monotonically_increasing_segments(df, categories:list[str], measure:tu
         in df.groupby(categories)
     )
 
-def check_no_reversed_segments(df, measure:tuple[str,str]):
+def check_no_reversed_segments(df, measure:Tuple[str,str]):
     """
     Check that the measure[0] <= measure[1] for every segment
     """
@@ -73,13 +74,16 @@ def check_linear_index(measure:pd.DataFrame) -> None:
     
         
 
-def check_linear_index_is_ordered_and_disjoint(df, measure:tuple[str,str], categories:list[str]):
+def check_linear_index_is_ordered_and_disjoint(df, measure:Tuple[str,str], categories:List[str]):
     """
     Take a dataframe `df` and a tuple `measure` of the name of the two columns
     which define a linear index. The dataframe will first be grouped by the column names categories
     """
 
-    for group_index, group in df.groupby(categories):
+    # for group_index, group in df.groupby(categories):
+    # TODO: Triggers useless future warning: if len(categories) == 1 then group_index will yield a length 1 tuple instead of a string.
+    # To suppress the warning we can do something yuck:
+    for group_index, group in df.groupby(categories[0] if len(categories)==1 else categories):
         measure_columns = group[[*measure]]
         if not measure_columns.iloc[:,0].is_monotonic_increasing:
             raise ValueError(
