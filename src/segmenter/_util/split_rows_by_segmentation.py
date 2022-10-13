@@ -1,3 +1,4 @@
+from typing import List, Tuple
 import pandas
 import numpy as np
 
@@ -19,9 +20,9 @@ class CN:
 def split_rows_by_segmentation(
         original_segmentation:pandas.DataFrame,
         additional_segmentation:pandas.DataFrame,
-        categories:list[str],
-        measure_slk:tuple[str,str],
-        measure_true:tuple[str,str],
+        categories:List[str],
+        measure_slk:Tuple[str,str],
+        measure_true:Tuple[str,str],
         name_original_index:str,
         name_additional_index:str,
     ):

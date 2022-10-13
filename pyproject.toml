@@ -1,14 +1,42 @@
-[build-system]
-requires = [
-  "setuptools >= 40.9.0",
-  "wheel",
+[project]
+name = "segmenter"
+version = "1.0.0"
+authors = [
+  { name="Nicholas Archer"},
 ]
-build-backend = "setuptools.build_meta"
+description = "Tools for segmenting a road network"
+readme = "readme.md"
+requires-python = ">=3.8"
+dependencies = [
+  "pandas",
+  "deprecated",
+  "requests",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/thehappycheese/segmenter"
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.github",
+  "/docs",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/segmenter"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q --tb=short"
-
+addopts = "-ra -v --tb=short --capture=no"
+# -ra           : (r)show extra test summary (a)ll except passed (A)ll including passed
+# -q            : quiet
+# --tb=short    : shorter error messages
+# --capture=no  : disable pytest comment capture behaviour
 testpaths = [
   "test"
 ]

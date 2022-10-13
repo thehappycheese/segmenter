@@ -1,7 +1,7 @@
 
 
 
-from typing import Optional
+from typing import Optional, List, Tuple
 import pandas
 import numpy as np
 CATEGORY_COLUMN_NAME = "seg.ctg"
@@ -10,8 +10,8 @@ CATEGORY_COLUMN_NAME = "seg.ctg"
 
 def segment_by_categories_and_slk_discontinuities(
         data:pandas.DataFrame,
-        categories:list[str],
-        measure_slk:tuple[str,str],
+        categories:List[str],
+        measure_slk:Tuple[str,str],
     ):
     """
     Returns a series containing integer segment labels:
@@ -64,9 +64,9 @@ def segment_by_categories_and_slk_discontinuities(
 
 def segment_by_categories_and_slk_true_discontinuities(
         data:pandas.DataFrame,
-        categories:list[str],
-        measure_slk:tuple[str,str],
-        measure_true:tuple[str,str]
+        categories:List[str],
+        measure_slk:Tuple[str,str],
+        measure_true:Tuple[str,str]
     ) -> pandas.Series:
     """
     Returns a series containing integer segment labels:
@@ -158,10 +158,10 @@ def segment_by_categories_and_slk_true_discontinuities(
 
 def segment_by_cross_section(
         data,
-        categories:list[str],
+        categories:List[str],
         lane_category:str,
-        measure_slk:tuple[str,str],
-        measure_true:tuple[str,str]
+        measure_slk:Tuple[str,str],
+        measure_true:Tuple[str,str]
     ):
     """
     Returns a series containing integer segment labels:

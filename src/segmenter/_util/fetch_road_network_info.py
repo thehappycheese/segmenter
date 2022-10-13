@@ -1,6 +1,6 @@
 from typing import Any, Optional, Dict
 import requests
-import urllib
+from urllib.parse import urlencode
 import math
 import pandas as pd
 from deprecated import deprecated
@@ -25,7 +25,7 @@ def fetch_road_network_info(
         **kwargs
     }
 
-    response = requests.request("GET", f"{url}?"+urllib.parse.urlencode(query_params | {"returnCountOnly":True}))
+    response = requests.request("GET", f"{url}?"+urlencode(query_params | {"returnCountOnly":True}))
     record_count = response.json()["count"]
 
     print(f"Downloading {record_count} records" + (":" if chunk_limit is None else f", chunk_limit={chunk_limit}:"))
@@ -50,7 +50,7 @@ def fetch_road_network_info(
         response = requests.request(
             "GET",
              f"{url}?"
-            + urllib.parse.urlencode(
+            + urlencode(
                 {"resultOffset":offset} | query_params
             )
         )

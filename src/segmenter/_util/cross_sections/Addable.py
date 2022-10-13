@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Callable, Collection, Generator, Iterable, Iterator, Literal, Optional, Hashable, Any, Sequence
+from typing import Callable, Collection, Generator, Iterable, Iterator, List, Optional, Hashable, Any, Sequence, Tuple
 import pandas as pd
 import itertools
 
@@ -21,9 +21,9 @@ class Addable:
 
     """
     __slots__ = ['_data']
-    _data:list[tuple[Hashable, float]]
+    _data:List[Tuple[Hashable, float]]
 
-    def __init__(self, data:list[tuple[Hashable, float]]):
+    def __init__(self, data:List[tuple[Hashable, float]]):
         self._data = [
             (groupby_index, the_sum)
             for groupby_index, index_overlap_iterator in

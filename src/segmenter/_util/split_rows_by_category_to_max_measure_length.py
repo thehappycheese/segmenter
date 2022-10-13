@@ -1,3 +1,4 @@
+from typing import List, Tuple
 import pandas
 import numpy as np
 from .by_category import segment_by_categories_and_slk_true_discontinuities
@@ -5,9 +6,9 @@ from .linspace_steps import linspace_steps
 
 def split_rows_by_category_to_max_segment_length(
     data:pandas.DataFrame,
-    measure_slk:tuple[str,str],
-    measure_true:tuple[str,str],
-    categories:list[str],
+    measure_slk:Tuple[str,str],
+    measure_true:Tuple[str,str],
+    categories:List[str],
     max_segment_length:float,
     min_segment_length:float=0,
 ) -> pandas.DataFrame:
@@ -197,9 +198,9 @@ def split_rows_by_category_to_max_segment_length(
 def _recombine_segmentation_index(
         segmentation:pandas.DataFrame,
         original_data:pandas.DataFrame,
-        measure:tuple[str,str],
+        measure:Tuple[str,str],
         grouping_id:str,
-        grouping_range:tuple[str,str],
+        grouping_range:Tuple[str,str],
     ) -> pandas.Series:
     """
     For each observation in `segmentation` finds the matching
