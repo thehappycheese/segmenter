@@ -8,3 +8,5 @@ from ._util.fetch_road_network_info import fetch_road_network_info
 from ._util.split_rows_by_segmentation import split_rows_by_segmentation
 
 from ._util.cross_sections.cross_sections import cross_sections, cross_sections_normalised
+
+from ._util.check_segmentation import check_linear_index, check_linear_index_is_ordered_and_disjoint, check_monotonically_increasing_segments, check_no_reversed_segments
