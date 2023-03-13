@@ -25,6 +25,7 @@ def split_rows_by_segmentation(
         measure_true:Tuple[str,str],
         name_original_index:str,
         name_additional_index:str,
+        relax_slk_checks:bool=False
     ):
     """
     Combines two segmentations, returning a new dataframe. The new segmentation will
@@ -47,6 +48,7 @@ def split_rows_by_segmentation(
         measure_true: Typically `('true_from','true_to')`
         name_original_index: The desired name of the column that will be output into result. The value in this column will be the integer index of the row in `original_segmentation` that corresponds to each row of the `result`. Typically `'original_index'`
         name_additional_index:  The desired name of the column that will be output into result. The value in this column will be the integer index of the row in `original_segmentation` that corresponds to each row of the `result`. Typically `'additional_index'`
+        relax_slk_checks:  Relax the ordered and disjoint checks on the addititional_segments dataframe SLK columns. Sometimes it is valid to have an SLK_END < SLK_START when the segment lies inside a point of equation. False by default untill further testing.
     """
     
     if (name_original_index==name_additional_index):
@@ -80,12 +82,12 @@ def split_rows_by_segmentation(
     _check_columns_present("measure_slk",  additional_segmentation, measure_slk,  "additional_segmentation")
     _check_columns_present("measure_true", additional_segmentation, measure_true, "additional_segmentation")
 
-
     check_linear_index(original_segmentation[list(measure_slk)])
     check_linear_index(original_segmentation[list(measure_true)])
     check_linear_index_is_ordered_and_disjoint(original_segmentation, measure_true, categories)
 
-    check_linear_index(additional_segmentation[list(measure_slk)])
+    if not relax_slk_checks:
+        check_linear_index(additional_segmentation[list(measure_slk)])
     check_linear_index(additional_segmentation[list(measure_true)])
     check_linear_index_is_ordered_and_disjoint(additional_segmentation, measure_true, categories)
     
