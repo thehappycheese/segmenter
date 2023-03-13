@@ -28,6 +28,11 @@
     - [3.5.5. Illustrated Example - Cross Sections over each Carriageway](#355-illustrated-example---cross-sections-over-each-carriageway)
     - [3.5.6. Illustrated Example - Cross Sections over Carriageway Breaking at Width Changes](#356-illustrated-example---cross-sections-over-carriageway-breaking-at-width-changes)
     - [3.5.7. Aggregating information in the original dataframe](#357-aggregating-information-in-the-original-dataframe)
+  - [3.6. Segmentation Checks](#36-segmentation-checks)
+    - [3.6.1. `check_linear_index`](#361-check_linear_index)
+    - [3.6.2. `check_linear_index_is_ordered_and_disjoint`](#362-check_linear_index_is_ordered_and_disjoint)
+    - [3.6.3. `check_monotonically_increasing_segments`](#363-check_monotonically_increasing_segments)
+    - [3.6.4. `check_no_reversed_segments`](#364-check_no_reversed_segments)
 
 ## 1. Introduction
 
@@ -767,3 +772,56 @@ cross_sections_with_original_columns = cross_section_table.join(surface_details[
 cross_sections_aggregated = cross_sections_with_original_columns.groupby("cross_section_number").aggregate(...)
 result = group_table.join(cross_sections_aggregated, on="cross_section_number")
 ```
+
+
+### 3.6. Segmentation Checks
+
+#### 3.6.1. `check_linear_index`
+
+Take a dataframe consisting of exactly two numerical columns,
+representing ("slk_from","slk_to") or ("true_from", "true_to")
+
+Raises and error if there is some problem with the index
+
+- Non Numeric
+- Reversed From/To
+- Zero Length
+- NaN
+
+> Note: see `check_linear_index_is_ordered_and_disjoint` for more checks
+
+example:
+
+```python
+from segmenter._util.check_segmentation import check_linear_index
+
+df = pd.read_excel(...)
+
+check_linear_index(df[[ "slk_from",  "slk_to"]])
+check_linear_index(df[["true_from", "true_to"]])
+```
+
+#### 3.6.2. `check_linear_index_is_ordered_and_disjoint`
+
+Takes
+- a dataframe `df` 
+- a tuple `measure` (the names of the from/to measure columns
+which define a linear index eg `("true_from","true_to")`)
+- A list of `categories` (column names) by which to group the data before applying the check;
+
+The function will group the dataframe by `categories` then check
+- both `measure` columns are monotonically increasing
+- the 'measure from' column is always less than the 'measure to' column
+
+> Note: does not perform a sort. Input data must be pre-sorted by categories and measure[0]
+
+#### 3.6.3. `check_monotonically_increasing_segments`
+
+Check that the segments are monotonically increasing;
+Every segment in each category must start at or after the end of the previous segment
+
+> Note: does not perform a sort. Input data must be pre-sorted by measure[0]
+
+#### 3.6.4. `check_no_reversed_segments`
+
+Check that the measure[0] <= measure[1] for every segment
