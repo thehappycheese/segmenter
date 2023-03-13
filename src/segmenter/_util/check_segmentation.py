@@ -17,6 +17,8 @@ def check_monotonically_increasing_segments(df, categories:List[str], measure:Tu
 def check_no_reversed_segments(df, measure:Tuple[str,str]):
     """
     Check that the measure[0] <= measure[1] for every segment
+
+    measure might be `("true_from", "true_to")` for example.
     """
     return (df[measure[0]]<=df[measure[1]]).all()
 
@@ -71,13 +73,19 @@ def check_linear_index(measure:pd.DataFrame) -> None:
         raise ValueError(
             f"The columns ({column_names}) contain at least one zero length segment"
         )
-    
-        
+
 
 def check_linear_index_is_ordered_and_disjoint(df, measure:Tuple[str,str], categories:List[str]):
     """
-    Take a dataframe `df` and a tuple `measure` of the name of the two columns
-    which define a linear index. The dataframe will first be grouped by the column names categories
+    Takes
+    - a dataframe `df` 
+    - a tuple `measure` (the names of the from/to measure columns
+    which define a linear index eg `("true_from","true_to")`)
+    - A list of `categories` (column names) by which to group the data before applying the check;
+    
+    The function will group the dataframe by `categories` then check
+    - both `measure` columns are monotonically increasing
+    - the 'measure from' column is always less than the 'measure to' column
     """
 
     # for group_index, group in df.groupby(categories):
