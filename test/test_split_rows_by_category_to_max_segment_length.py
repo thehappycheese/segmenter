@@ -121,3 +121,51 @@ def test_split_rows_by_category_to_max_segment_length():
         expected_result,
         check_like =False, # ignore column order and label order
     )
+
+# test test_split_rows_by_category_to_max_segment_length using the following data
+# 	road_number	carriageway	slk_from	slk_to	true_from	true_to	original_index_road_network	additional_index_group_table	cross_section_number	cross_section_number_with_infill
+# 8323	H006	S	1751.09	1752.89	1744.58	1746.46	1941	7415	2437	2437
+# 8324	H006	S	1752.89	1753.29	1746.46	1746.86	1941	7416	2438	2438
+# 8325	H006	S	1753.29	1760.11	1746.86	1753.68	1941	7417	2439	2439
+# 8326	H006	S	1760.11	1760.41	1753.68	1753.98	1941	7418	2440	2440
+# 8327	H006	S	1760.41	1762.59	1753.98	1756.16	1941	7419	2441	2441
+# 8328	H006	S	1762.59	1769.76	1756.16	1763.33	1941	7420	2442	2442
+# 8329	H006	S	1769.76	1777.58	1763.33	1771.07	1941	7421	2443	2443
+# 8330	H006	S	1762.59	1777.58	1771.07	1771.15	1942	7421	2443	2443
+# 8331	H006	S	1762.59	1763.15	1771.15	1771.71	1942	7422	2444	2444
+# 8332	H006	S	1763.15	1763.52	1771.71	1772.08	1942	7423	2445	2445
+
+def test_test_split_rows_by_category_to_max_segment_length_troublesome():
+    import pandas as pd
+    import numpy as np
+    from segmenter import split_rows_by_category_to_max_segment_length
+    
+    data_to_segment = pd.DataFrame(
+        # road_number	carriageway	slk_from	slk_to	true_from	true_to	original_index_road_network	additional_index_group_table	cross_section_number	cross_section_number_with_infill
+        columns=["index","road_number", "carriageway", "slk_from", "slk_to", "true_from", "true_to", "original_index_road_network", "additional_index_group_table", "cross_section_number", "cross_section_number_with_infill"],
+        data=[
+            [8323, "H006", "S", 1751.09, 1752.89, 1744.58, 1746.46, 1941, 7415, 2437, 2437],
+            [8324, "H006", "S", 1752.89, 1753.29, 1746.46, 1746.86, 1941, 7416, 2438, 2438],
+            [8325, "H006", "S", 1753.29, 1760.11, 1746.86, 1753.68, 1941, 7417, 2439, 2439],
+            [8326, "H006", "S", 1760.11, 1760.41, 1753.68, 1753.98, 1941, 7418, 2440, 2440],
+            [8327, "H006", "S", 1760.41, 1762.59, 1753.98, 1756.16, 1941, 7419, 2441, 2441],
+            [8328, "H006", "S", 1762.59, 1769.76, 1756.16, 1763.33, 1941, 7420, 2442, 2442],
+            [8329, "H006", "S", 1769.76, 1777.58, 1763.33, 1771.07, 1941, 7421, 2443, 2443],
+            [8330, "H006", "S", 1762.59, 1777.58, 1771.07, 1771.15, 1942, 7421, 2443, 2443], # << this row bridges a really weird POE and causes headaches!
+            [8331, "H006", "S", 1762.59, 1763.15, 1771.15, 1771.71, 1942, 7422, 2444, 2444],
+            [8332, "H006", "S", 1763.15, 1763.52, 1771.71, 1772.08, 1942, 7423, 2445, 2445],
+        ],
+    ).set_index("index")
+
+    result = split_rows_by_category_to_max_segment_length(
+        data_to_segment,
+        categories=["road_number", "cross_section_number_with_infill"],
+        measure_slk =("slk_from", "slk_to"),
+        measure_true=("true_from","true_to"),
+        max_segment_length=0.100,
+        min_segment_length=0.010,
+    )
+    #print(result)
+    # we will not check the result here... we just want to make sure there is no error
+
+    #    1752.89, 1744.58, 1746.46

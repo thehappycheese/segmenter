@@ -45,7 +45,7 @@ def split_rows_by_category_to_max_segment_length(
 
     data["__segment_index"] = segment_index
 
-    data["__original_order"] = pandas.Series(np.arange(len(data)), dtype="i8")
+    data["__original_order"] = np.arange(len(data)).astype(np.int64)
     data = data.sort_values(by=[*categories, "__segment_index"])
     data["__sorted_order"  ] = np.arange(len(data)).astype(np.int64)
 
@@ -87,21 +87,37 @@ def split_rows_by_category_to_max_segment_length(
             sorted_index_to
         ) in new_index_summary.itertuples(index=True):
 
+        if(slk_to-slk_from == true_to-true_from):
+            # if the slk spacing is the same as true spacing we can make the SLK's land on nice round multiples of the spacing
+            new_slks = linspace_steps(
+                measure_from   = slk_from,
+                measure_to     = slk_to,
+                multiples      = max_segment_length,
+                minimum_length = min_segment_length
+            )
 
-        new_slks = linspace_steps(
-            measure_from   = slk_from,
-            measure_to     = slk_to,
-            multiples      = max_segment_length,
-            minimum_length = min_segment_length
-        )
+            new_trues = np.round(
+                (new_slks - slk_from)
+                / (slk_to   - slk_from)
+                * (true_to  - true_from)
+                +  true_from,
+                3
+            )
+        else:
+            new_trues = linspace_steps(
+                measure_from   = true_from,
+                measure_to     = true_to,
+                multiples      = max_segment_length,
+                minimum_length = min_segment_length
+            )
 
-        new_trues = np.round(
-              (new_slks - slk_from)
-            / (slk_to   - slk_from)
-            * (true_to  - true_from)
-            +  true_from,
-            3
-        )
+            new_slks = np.round(
+                (new_trues - true_from)
+                / (true_to  - true_from)
+                * (slk_to   - slk_from)
+                +  slk_from,
+                3
+            )
 
         sub_results_slk_true.append(
             np.array([
