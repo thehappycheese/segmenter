@@ -150,7 +150,7 @@ def segment_by_categories_and_slk_true_discontinuities(
     # Note: the following strips the index from result_column 
     # and relies on sort order to join with original data.index
     return pandas.Series(
-        result_column.iloc[:,0].values.astype("u4"),
+        result_column.iloc[:,0].values.astype("u8"),
         index=data.index
     )
 
