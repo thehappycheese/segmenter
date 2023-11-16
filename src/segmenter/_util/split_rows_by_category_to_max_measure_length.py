@@ -30,6 +30,14 @@ def split_rows_by_category_to_max_segment_length(
     Returns:
         pandas.DataFrame: 
     """
+
+    # check none of the slk columns are the same as true columns
+    if set(measure_slk) & set(measure_true):
+        raise ValueError(
+            f"The columns selected in parameter `measure_slk` must all be different to those in `measure_true`; "
+            f"Found {set(measure_slk) & set(measure_true)} in common."
+            f" If you do not have true distance columns then you should duplicate the slk columns with new names before calling this function.")
+
     
     # segment_index is like the "network_element" field in the imaginary geometry table
     segment_index    = segment_by_categories_and_slk_true_discontinuities(
