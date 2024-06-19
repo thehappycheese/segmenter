@@ -2,7 +2,7 @@
 name = "segmenter"
 version = "1.1.1"
 authors = [
-  { name="Nicholas Archer"},
+  { name = "Nicholas Archer" }
 ]
 description = "Tools for segmenting a road network"
 readme = "readme.md"
@@ -10,12 +10,11 @@ requires-python = ">=3.8"
 dependencies = [
   "pandas",
   "deprecated",
-  "requests",
+  "requests"
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/thehappycheese/segmenter"
-
+Homepage = "https://github.com/thehappycheese/segmenter"
 
 [build-system]
 requires = ["hatchling"]
@@ -24,7 +23,7 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.sdist]
 exclude = [
   "/.github",
-  "/docs",
+  "/docs"
 ]
 
 [tool.hatch.build.targets.wheel]
