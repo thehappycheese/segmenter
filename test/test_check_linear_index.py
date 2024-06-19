@@ -6,7 +6,7 @@ import pytest
 def test_check_linear_index():
     import pandas as pd
     import numpy as np
-    from segmenter._util.check_segmentation import check_linear_index
+    from road_segmenter._util.check_segmentation import check_linear_index
 
     # passing test
     df = pd.DataFrame(
@@ -82,7 +82,7 @@ def test_check_linear_index():
 def test_check_linear_index_is_ordered_and_disjoint():
     import pandas as pd
     import numpy as np
-    from segmenter._util.check_segmentation import check_linear_index, check_linear_index_is_ordered_and_disjoint
+    from road_segmenter._util.check_segmentation import check_linear_index, check_linear_index_is_ordered_and_disjoint
     
     # passing test
     df = pd.DataFrame(

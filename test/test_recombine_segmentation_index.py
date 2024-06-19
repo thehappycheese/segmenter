@@ -6,7 +6,7 @@ import pandas as pd
 
 
 def test_recombine_segmentation_index():
-    from segmenter._util.split_rows_by_category_to_max_measure_length import _recombine_segmentation_index
+    from road_segmenter._util.split_rows_by_category_to_max_measure_length import _recombine_segmentation_index
 
 
     original_data = pd.DataFrame(

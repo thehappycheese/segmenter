@@ -6,7 +6,7 @@
 def test_segment_by_categories_and_slk_discontinuities():
     import pandas as pd
     import numpy as np
-    from segmenter import segment_by_categories_and_slk_discontinuities
+    from road_segmenter import segment_by_categories_and_slk_discontinuities
     
     
     data_to_segment = pd.DataFrame(

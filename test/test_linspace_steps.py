@@ -64,7 +64,7 @@ from contextlib import nullcontext as does_not_raise
 
 def test_linspace_steps(test_input, expected_result, expectation):
 	import numpy as np
-	from segmenter import linspace_steps
+	from road_segmenter import linspace_steps
 
 	with expectation:
 		actual_result = linspace_steps(**test_input)

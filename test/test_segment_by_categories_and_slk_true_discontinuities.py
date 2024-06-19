@@ -3,7 +3,7 @@ import numpy as np
 
 
 def test_segment_by_categories_and_slk_true_discontinuities():
-    from segmenter import segment_by_categories_and_slk_true_discontinuities
+    from road_segmenter import segment_by_categories_and_slk_true_discontinuities
     
     data_to_segment = pd.DataFrame(
         columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],

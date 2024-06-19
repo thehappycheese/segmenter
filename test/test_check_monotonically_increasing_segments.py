@@ -3,7 +3,7 @@
 
 def test_check_monotonically_increasing_segments():
     import pandas as pd
-    from segmenter._util.check_segmentation import check_monotonically_increasing_segments
+    from road_segmenter._util.check_segmentation import check_monotonically_increasing_segments
     
     df = pd.DataFrame(
         columns=[ 'road', 'carriageway', 'slk_from', 'slk_to'],
@@ -58,7 +58,7 @@ def test_check_monotonically_increasing_segments():
 
 def test_reversed_segments():
     import pandas as pd
-    from segmenter._util.check_segmentation import check_no_reversed_segments
+    from road_segmenter._util.check_segmentation import check_no_reversed_segments
     
     df = pd.DataFrame(
         columns=[ 'road', 'carriageway', 'slk_from', 'slk_to'],
