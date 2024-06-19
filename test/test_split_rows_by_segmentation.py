@@ -5,7 +5,7 @@ def test_split_rows_by_segmentation_without_poes():
     import pandas as pd
     from pandas.testing import assert_frame_equal
     import numpy as np
-    from road_segmenter import split_rows_by_segmentation
+    from segmenter import split_rows_by_segmentation
     
     original_segmentation = pd.DataFrame(
         columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
@@ -79,7 +79,7 @@ def test_split_rows_by_segmentation_with_poes():
     import pandas as pd
     from pandas.testing import assert_frame_equal
     import numpy as np
-    from road_segmenter import split_rows_by_segmentation
+    from segmenter import split_rows_by_segmentation
     
     original_segmentation = pd.DataFrame(
         columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
@@ -180,7 +180,7 @@ def test_split_rows_by_segmentation_preserves_indexes():
     import pandas as pd
     from pandas.testing import assert_frame_equal
     import numpy as np
-    from road_segmenter import split_rows_by_segmentation
+    from segmenter import split_rows_by_segmentation
     
     original_segmentation = pd.DataFrame(
         columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],

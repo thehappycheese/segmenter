@@ -1,6 +1,6 @@
 # Segmenter <!-- omit in toc -->
 
-[![Run Tests](https://github.com/thehappycheese/segmenter/actions/workflows/main.yml/badge.svg)](https://github.com/thehappycheese/segmenter/actions/workflows/main.yml)
+[![Test and Publish PyPi](https://github.com/thehappycheese/segmenter/actions/workflows/publish_to_pypi.yml/badge.svg)](https://github.com/thehappycheese/segmenter/actions/workflows/publish_to_pypi.yml)
 
 - [1. Introduction](#1-introduction)
   - [1.1. Related Project `pyroads`](#11-related-project-pyroads)

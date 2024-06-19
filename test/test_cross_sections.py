@@ -2,7 +2,7 @@
 
 def test_cross_sections():
     import pandas as pd
-    from road_segmenter import cross_sections
+    from segmenter import cross_sections
     data_to_iterate_over = pd.DataFrame(
         columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
         data=[
@@ -70,7 +70,7 @@ def test_cross_sections():
 
 def test_cross_sections_preserves_index():
     import pandas as pd
-    from road_segmenter import cross_sections
+    from segmenter import cross_sections
     data_to_iterate_over = pd.DataFrame(
         columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
         data=[

@@ -4,7 +4,7 @@
 def test_split_rows_by_category_to_max_segment_length():
     import pandas as pd
     import numpy as np
-    from road_segmenter import split_rows_by_category_to_max_segment_length
+    from segmenter import split_rows_by_category_to_max_segment_length
     
     data_to_segment = pd.DataFrame(
         columns=["road_no", "carriageway", "xsp", "slk_from", "slk_to", "true_from", "true_to", "value"],
@@ -141,7 +141,7 @@ def test_split_rows_by_category_to_max_segment_length():
 def test_test_split_rows_by_category_to_max_segment_length_troublesome():
     import pandas as pd
     import numpy as np
-    from road_segmenter import split_rows_by_category_to_max_segment_length
+    from segmenter import split_rows_by_category_to_max_segment_length
     
     data_to_segment = pd.DataFrame(
         # road_number	carriageway	slk_from	slk_to	true_from	true_to	original_index_road_network	additional_index_group_table	cross_section_number	cross_section_number_with_infill
