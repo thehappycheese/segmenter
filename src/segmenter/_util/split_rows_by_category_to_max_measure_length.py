@@ -79,9 +79,9 @@ def split_rows_by_category_to_max_segment_length(
     sub_results_indexes = [[] for _ in range(len(categories)+1)]
 
     # stretch index;
-    MOD_result_index = new_index_summary.index.repeat(
-        new_index_summary.loc[:,("__sorted_order","max")] - new_index_summary.loc[:,("__sorted_order","min")]
-    )
+    # MOD_result_index = new_index_summary.index.repeat(
+    #     new_index_summary.loc[:,("__sorted_order","max")] - new_index_summary.loc[:,("__sorted_order","min")]
+    # )
 
 
     # The following logic is similar to a pandas.DataFrame.reindex() call with an Index.repeat()
@@ -199,12 +199,12 @@ def split_rows_by_category_to_max_segment_length(
     # get a list of column names that are not part of the index we built
     value_columns = list(set(data.columns) - {*categories, *measure_slk, *measure_true})
 
-    result = (
+    final_result = (
         result
         .join(
             data[value_columns],
             how="left",
-            on=recombination_index
+            on=recombination_index.rename("recombination_index")
         )
         .drop(columns=[
             "__sorted_index_from",
@@ -215,7 +215,7 @@ def split_rows_by_category_to_max_segment_length(
         ])
     )
 
-    return result
+    return final_result
 
 
 

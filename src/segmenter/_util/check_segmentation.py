@@ -53,11 +53,11 @@ def check_linear_index(measure:pd.DataFrame) -> None:
     if len(measure.columns)!=2:
         raise ValueError(f"A measure must consist of exactly two columns; found ({column_names})")
 
-    if not pd.api.types.is_numeric_dtype(measure.dtypes[0]):
-        raise TypeError(f"The column {measure.columns[0]} is not a numeric dtype; {measure.dtypes[0]}")
+    if not pd.api.types.is_numeric_dtype(measure.dtypes.iloc[0]):
+        raise TypeError(f"The column {measure.columns.to_series().iloc[0]} is not a numeric dtype; {measure.dtypes.iloc[0]}")
 
-    if not pd.api.types.is_numeric_dtype(measure.dtypes[1]):
-        raise TypeError(f"The column {measure.columns[1]} is not a numeric dtype; {measure.dtypes[1]}")
+    if not pd.api.types.is_numeric_dtype(measure.dtypes.iloc[1]):
+        raise TypeError(f"The column {measure.columns.to_series().iloc[1]} is not a numeric dtype; {measure.dtypes.iloc[1]}")
 
     if measure.isna().sum().sum() > 0:
         raise ValueError(
